@@ -1,0 +1,133 @@
+// ============================================================================
+// ConectaBem — Schema do Banco de Dados (Prisma + PostgreSQL)
+// ============================================================================
+// Este arquivo define todos os modelos, campos e relacionamentos (1:N)
+// da plataforma. Após qualquer alteração, execute:
+//   npx prisma migrate dev --name descricao_da_mudanca
+// ============================================================================
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+// ─── Enums de Autorização ───────────────────────────────────────────────────
+enum Role {
+  USER
+  INSTITUTION
+  ADMIN
+}
+
+enum UserStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+// ─── Usuários ───────────────────────────────────────────────────────────────
+// Perfis possíveis: USER, INSTITUTION, ADMIN
+// O campo `pontos` é o saldo acumulado do doador (decrementado nos resgates).
+// Campos de Instituição ficam atrelados ao registro caso role=INSTITUTION.
+model User {
+  id                    Int        @id @default(autoincrement())
+  nome                  String
+  email                 String     @unique
+  senha                 String     // Hash bcrypt
+  role                  Role       @default(USER)
+  status                UserStatus @default(APPROVED)
+  pontos                Int        @default(0)
+  avatar                String?    // URL do Cloudinary (opcional)
+  cnpj                  String?    @unique
+  descricaoInstituicao  String?
+  necessidadesUrgentes  String?
+  telefone              String?
+  endereco              String?
+  rejectionReason       String?
+  criadoEm              DateTime   @default(now())
+
+  // Relacionamentos 1:N
+  donations           Donation[]   @relation("DonationsAsDonor")
+  receivedDonations   Donation[]   @relation("DonationsAsInstitution")
+  redemptions         Redemption[]
+  requests            Request[]
+
+  @@map("users")
+}
+
+// ─── Doações ────────────────────────────────────────────────────────────────
+// Uma doação pode ser de item físico (tipo = "item") ou financeira (tipo = "financeira").
+// O campo `pontosGerados` registra quantos pontos foram creditados ao doador.
+model Donation {
+  id             Int      @id @default(autoincrement())
+  userId         Int      // ID do Doador
+  institutionId  Int?     // ID da Instituição beneficiada
+  tipo           String   // "item" | "financeira"
+  item           String?  // Nome do item (quando tipo = "item")
+  valor          Float?   // Valor em R$ (quando tipo = "financeira")
+  status         String   @default("pendente") // "pendente" | "aprovada" | "entregue"
+  pontosGerados  Int      @default(0)
+  fotoUrl        String?  // URL da foto no Cloudinary
+  criadoEm       DateTime @default(now())
+
+  // Relacionamentos
+  user        User  @relation("DonationsAsDonor", fields: [userId], references: [id], onDelete: Cascade)
+  institution User? @relation("DonationsAsInstitution", fields: [institutionId], references: [id], onDelete: SetNull)
+
+  @@map("donations")
+}
+
+// ─── Recompensas ────────────────────────────────────────────────────────────
+// Itens disponíveis no marketplace para troca por pontos.
+// Tipos: "cupom" (desconto em parceiro) ou "giftcard" (vale-presente).
+model Reward {
+  id          Int      @id @default(autoincrement())
+  nome        String
+  descricao   String?
+  custoPontos Int      // Quantidade de pontos necessária para resgatar
+  tipo        String   // "cupom" | "giftcard"
+  estoque     Int      @default(0) // Quantidade disponível
+  ativo       Boolean  @default(true) // false = retirado do marketplace
+
+  // Relacionamento 1:N
+  redemptions Redemption[]
+
+  @@map("rewards")
+}
+
+// ─── Resgates ───────────────────────────────────────────────────────────────
+// Registro de cada troca de pontos por recompensa.
+model Redemption {
+  id              Int      @id @default(autoincrement())
+  userId          Int
+  rewardId        Int
+  pontosDeduzidos Int
+  codigo          String   @default("GERADO-ANTIGO") // Código do Cupom gerado
+  criadoEm        DateTime @default(now())
+
+  // Relacionamentos
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  reward Reward @relation(fields: [rewardId], references: [id], onDelete: Cascade)
+
+  @@map("redemptions")
+}
+
+// ─── Solicitações de Itens (ONG) ────────────────────────────────────────────
+// Criadas pela ONG para indicar itens que precisam receber como doação.
+model Request {
+  id           Int      @id @default(autoincrement())
+  institutionId Int
+  name         String   // Nome do item solicitado
+  qty          String   // Quantidade (texto livre: "50 caixas", "100 unidades")
+  urgency      String   @default("Média") // "Baixa" | "Média" | "Alta"
+  status       String   @default("Pendente") // "Pendente" | "Atendido"
+  criadoEm    DateTime @default(now())
+
+  institution  User     @relation(fields: [institutionId], references: [id], onDelete: Cascade)
+
+  @@map("requests")
+}
