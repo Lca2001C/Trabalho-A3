@@ -1,5 +1,15 @@
 import React from 'react';
 
+// ── Skeleton Loader ─────────────────────────────────────────────────────────
+export function Skeleton({ className, style }) {
+  return (
+    <div 
+      className={`animate-pulse bg-gray-200 dark:bg-gray-800 rounded ${className}`} 
+      style={style}
+    />
+  );
+}
+
 // ── StatsCard ────────────────────────────────────────────────────────────────
 export function StatsCard({ label, value, showLink, linkText, onClick, isRanking, isPoints, icon }) {
   return (
@@ -60,28 +70,29 @@ export function LevelProgress({ points }) {
 
   return (
     <div className="my-8">
-      <div className="flex items-center justify-between mb-2">
-        <span className="px-3 py-1 rounded-full text-[12px] font-bold"
-              style={{ backgroundColor: 'var(--green-light)', color: 'var(--green-text)' }}>
-          Nível {level.label}
-        </span>
-        <span className="text-[12px]" style={{ color: 'var(--text-muted)' }}>
-          Próximo nível: {level.next} — {Math.max(0, level.goal - points)} pts restantes
+      <div className="flex items-center justify-between mb-3">
+        <div className="flex items-center gap-2">
+          <span className="px-3 py-1 rounded-full text-[12px] font-bold shadow-sm"
+                style={{ backgroundColor: 'var(--green-light)', color: 'var(--green-text)' }}>
+            Nível {level.label}
+          </span>
+          <span className="text-[11px] font-medium opacity-60" style={{ color: 'var(--text-muted)' }}>
+            {points} / {level.goal} pts
+          </span>
+        </div>
+        <span className="text-[12px] font-medium" style={{ color: 'var(--text-secondary)' }}>
+          {points >= 5000 ? 'Você atingiu o nível máximo!' : `Faltam ${level.goal - points} pts para o nível ${level.next}`}
         </span>
       </div>
 
-      <div className="h-[6px] w-full rounded-full overflow-hidden" 
+      <div className="h-[8px] w-full rounded-full overflow-hidden shadow-inner" 
            style={{ backgroundColor: 'var(--bg-tertiary)' }}>
-        <div className="h-full rounded-full transition-all duration-[600ms] ease-out"
+        <div className="h-full rounded-full transition-all duration-[1000ms] ease-out shadow-lg"
              style={{ 
                width: `${progress}%`, 
-               backgroundColor: 'var(--green-primary)' 
+               backgroundColor: 'var(--green-primary)',
+               backgroundImage: 'linear-gradient(90deg, var(--green-primary), #10b981)'
              }} />
-      </div>
-
-      <div className="flex justify-between mt-2">
-        <span className="text-[11px]" style={{ color: 'var(--text-muted)' }}>{points} pts</span>
-        <span className="text-[11px]" style={{ color: 'var(--text-muted)' }}>{level.goal} pts</span>
       </div>
     </div>
   );

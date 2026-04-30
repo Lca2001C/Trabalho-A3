@@ -118,75 +118,137 @@ const mockProducts = [
   }
 ];
 
-export default function MarketplaceView() {
-  const { user, refreshUser } = useAuth();
+import api from '../../services/api';
+
+export default function MarketplaceView({ cupons, usuario, refreshUser }) {
+  const { user } = useAuth(); // Fallback if prop not provided
+  const currentUser = usuario || user;
+  
+  const [rewards, setRewards] = useState([]);
+  const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState('pontos'); // 'pontos' ou 'compra'
   const [filter, setFilter] = useState('Todos');
   const [selectedProduct, setSelectedProduct] = useState(null);
   const [timeLeft, setTimeLeft] = useState('');
+  const [showCheckout, setShowCheckout] = useState(false);
+  const [isProcessing, setIsProcessing] = useState(false);
 
-  // Lógica do contador regressivo
+  // Busca recompensas reais do backend
+  useEffect(() => {
+    async function fetchRewards() {
+      try {
+        setLoading(true);
+        const res = await api.get('/api/rewards');
+        const categoryMap = {
+          cupom: 'Cupons',
+          giftcard: 'Gift Cards',
+          brinde: 'Brindes',
+          experiencia: 'Experiências',
+          certificado: 'Certificados',
+          artesanato: 'Artesanato',
+          digital: 'Digital',
+          simbolico: 'Simbólico'
+        };
+
+        const backendRewards = res.data.map(r => ({
+          id: r.id,
+          nome: r.nome,
+          fornecedor: 'Parceiro ConectaBem',
+          categoria: categoryMap[r.tipo] || (r.tipo.charAt(0).toUpperCase() + r.tipo.slice(1)),
+          tipo: r.preco > 0 ? 'compra' : 'pontos',
+          custo: r.preco > 0 ? r.preco : r.custoPontos,
+          bonus_pts: r.pontosBonus,
+          impacto: 'Gera impacto positivo direto',
+          imgEmoji: r.tipo === 'cupom' ? '🏷️' : r.tipo === 'digital' ? '📖' : r.tipo === 'artesanato' ? '🏺' : '🎁',
+          imagemUrl: r.imagemUrl,
+          desc: r.descricao,
+          estoque: r.estoque
+        }));
+
+        setRewards(backendRewards);
+      } catch (err) {
+        console.error('Erro ao buscar recompensas:', err);
+      } finally {
+        setLoading(false);
+      }
+    }
+    fetchRewards();
+  }, []);
+
+  // Lógica do contador regressivo (simulado)
   useEffect(() => {
     const timer = setInterval(() => {
       const now = Date.now();
-      const target = mockProducts.find(p => p.ofertaRelampago)?.expiresAt || now;
-      const diff = target - now;
+      const expiresAt = now + 3600000; // Simula expiração em 1h
+      const diff = expiresAt - now;
       
-      if (diff <= 0) {
-        setTimeLeft('Expirado');
-      } else {
-        const h = Math.floor(diff / 3600000);
-        const m = Math.floor((diff % 3600000) / 60000);
-        const s = Math.floor((diff % 60000) / 1000);
-        setTimeLeft(`${h.toString().padStart(2, '0')}:${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`);
-      }
+      const h = Math.floor(diff / 3600000);
+      const m = Math.floor((diff % 3600000) / 60000);
+      const s = Math.floor((diff % 60000) / 1000);
+      setTimeLeft(`${h.toString().padStart(2, '0')}:${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`);
     }, 1000);
     return () => clearInterval(timer);
   }, []);
 
   const pills = activeTab === 'pontos' 
-    ? ['Todos', 'Cupons', 'Experiências', 'Brindes', 'Certificados']
-    : ['Todos', 'Artesanato', 'Digital', 'Simbólico'];
+    ? ['Todos', 'Cupons', 'Gift Cards', 'Brindes', 'Experiências', 'Certificados']
+    : ['Todos', 'Artesanato', 'Digital', 'Brindes', 'Simbólico'];
 
-  const filteredProducts = mockProducts.filter(p => 
+  const filteredProducts = rewards.filter(p => 
     p.tipo === activeTab && (filter === 'Todos' || p.categoria === filter)
   );
 
-  const handleAction = (product) => {
+  const handleAction = async (product) => {
     if (activeTab === 'pontos') {
-      if (user.pontos < product.custo) {
+      if (currentUser.pontos < product.custo) {
         Swal.fire({ title: 'Saldo Insuficiente', text: 'Você ainda não tem pontos suficientes.', icon: 'error' });
         return;
       }
       
-      Swal.fire({
+      const confirm = await Swal.fire({
         title: 'Confirmar Resgate',
         text: `Deseja trocar ${product.custo} pontos por "${product.nome}"?`,
         icon: 'question',
         showCancelButton: true,
         confirmButtonColor: 'var(--green-primary)',
         confirmButtonText: 'Sim, resgatar!'
-      }).then((result) => {
-        if (result.isConfirmed) {
-          Swal.fire('Resgatado!', 'Sua recompensa já está disponível em Meus Comprovantes.', 'success');
-          setSelectedProduct(null);
-        }
       });
+
+      if (confirm.isConfirmed) {
+        try {
+          const res = await api.post('/api/rewards/redeem', { rewardId: product.id });
+          await Swal.fire({
+            title: 'Resgatado!',
+            html: `Sua recompensa já está disponível!<br/>Código: <b>${res.data.codigo}</b>`,
+            icon: 'success'
+          });
+          setSelectedProduct(null);
+          if (refreshUser) refreshUser(); // Atualiza os pontos no layout
+        } catch (err) {
+          Swal.fire('Erro', err.response?.data?.erro || 'Erro ao processar resgate.', 'error');
+        }
+      }
     } else {
-      Swal.fire({
-        title: 'Finalizar Compra',
-        text: `Valor: R$ ${product.custo.toFixed(2)}. Você ganhará ${product.bonus_pts} pontos!`,
-        icon: 'info',
-        showCancelButton: true,
-        confirmButtonColor: 'var(--green-primary)',
-        confirmButtonText: 'Comprar agora'
-      }).then((result) => {
-        if (result.isConfirmed) {
-          Swal.fire('Sucesso!', 'Sua compra ajudou a transformar vidas.', 'success');
-          setSelectedProduct(null);
-        }
-      });
+      // Abre o modal de checkout simulado
+      setSelectedProduct(product);
+      setShowCheckout(true);
     }
+  };
+
+  const handleFinishPurchase = () => {
+    setIsProcessing(true);
+    setTimeout(() => {
+      setIsProcessing(false);
+      setShowCheckout(false);
+      setSelectedProduct(null);
+      Swal.fire({
+        title: 'Compra Confirmada!',
+        text: 'Seu pagamento foi aprovado. Seus pontos de bônus foram creditados!',
+        icon: 'success',
+        confirmButtonColor: 'var(--green-primary)'
+      });
+      if (refreshUser) refreshUser();
+    }, 2500);
   };
 
   const getUserLevel = (pts) => {
@@ -196,7 +258,7 @@ export default function MarketplaceView() {
     return 'Diamante';
   };
 
-  const userLevel = getUserLevel(user?.pontos || 0);
+  const userLevel = getUserLevel(currentUser?.pontos || 0);
 
   return (
     <div className="max-w-6xl mx-auto animate-in fade-in slide-in-from-bottom-4 duration-500 pb-20">
@@ -214,7 +276,7 @@ export default function MarketplaceView() {
              style={{ backgroundColor: 'var(--green-light)' }}>
           <Trophy size={18} className="text-[var(--green-dark)]" />
           <span className="text-[15px] font-medium" style={{ color: 'var(--green-text)' }}>
-            Seu saldo: <span className="font-bold">{user?.pontos || 0} pts</span>
+            Seu saldo: <span className="font-bold">{currentUser?.pontos || 0} pts</span>
           </span>
         </div>
       </div>
@@ -276,9 +338,15 @@ export default function MarketplaceView() {
                 }}
               >
                 {/* Imagem / Banner */}
-                <div className="h-[120px] relative flex items-center justify-center text-5xl"
-                     style={{ backgroundColor: 'var(--bg-secondary)' }}>
-                  {p.imgEmoji}
+                <div className="h-[140px] relative overflow-hidden bg-[var(--bg-secondary)] flex items-center justify-center">
+                  {p.imgEmoji && !p.imagemUrl && <span className="text-5xl">{p.imgEmoji}</span>}
+                  {p.imagemUrl && (
+                    <img 
+                      src={p.imagemUrl} 
+                      alt={p.nome} 
+                      className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110" 
+                    />
+                  )}
                   
                   <div className="absolute top-3 left-3 px-2 py-1 rounded-md text-[10px] font-bold text-white uppercase"
                        style={{ backgroundColor: 'var(--green-primary)' }}>
@@ -392,9 +460,12 @@ export default function MarketplaceView() {
               <X size={20} style={{ color: 'var(--text-muted)' }} />
             </button>
 
-            <div className="h-[180px] rounded-xl mb-6 flex items-center justify-center text-7xl"
-                 style={{ backgroundColor: 'var(--bg-secondary)' }}>
-              {selectedProduct.imgEmoji}
+            <div className="h-[200px] rounded-xl mb-6 overflow-hidden flex items-center justify-center bg-[var(--bg-secondary)] border border-[var(--border)]">
+              {selectedProduct.imagemUrl ? (
+                <img src={selectedProduct.imagemUrl} alt={selectedProduct.nome} className="w-full h-full object-cover" />
+              ) : (
+                <span className="text-7xl">{selectedProduct.imgEmoji}</span>
+              )}
             </div>
 
             <div className="mb-6">
@@ -451,6 +522,68 @@ export default function MarketplaceView() {
         </div>
       )}
 
+      {/* MODAL DE CHECKOUT SIMULADO */}
+      {showCheckout && selectedProduct && (
+        <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 animate-in fade-in duration-200">
+          <div className="absolute inset-0 bg-black/60 backdrop-blur-md" onClick={() => !isProcessing && setShowCheckout(false)} />
+          
+          <div className="relative w-full max-w-[400px] card-base bg-[var(--bg-primary)] p-0 overflow-hidden animate-in zoom-in-95 duration-200 shadow-2xl">
+            <div className="p-6 text-center border-b" style={{ borderColor: 'var(--border)' }}>
+              <h3 className="text-[18px] font-medium" style={{ color: 'var(--text-primary)' }}>Finalizar Apoio</h3>
+              <p className="text-[12px]" style={{ color: 'var(--text-secondary)' }}>Escaneie o QR Code para pagar com PIX</p>
+            </div>
+
+            <div className="p-8 flex flex-col items-center">
+              <div className="relative w-48 h-48 bg-white p-3 rounded-2xl shadow-inner mb-6 border-2 border-emerald-500/20">
+                <img 
+                  src={`https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=ConectaBemPurchase_${selectedProduct.id}`} 
+                  alt="QR Code PIX"
+                  className={`w-full h-full transition-opacity duration-300 ${isProcessing ? 'opacity-20' : 'opacity-100'}`}
+                />
+                {isProcessing && (
+                  <div className="absolute inset-0 flex flex-col items-center justify-center gap-3">
+                    <Loader2 className="w-10 h-10 text-emerald-500 animate-spin" />
+                    <span className="text-[12px] font-bold text-emerald-600">Processando...</span>
+                  </div>
+                )}
+              </div>
+
+              <div className="w-full space-y-3 mb-6">
+                <div className="flex justify-between text-[13px]">
+                  <span style={{ color: 'var(--text-secondary)' }}>Produto:</span>
+                  <span className="font-medium" style={{ color: 'var(--text-primary)' }}>{selectedProduct.nome}</span>
+                </div>
+                <div className="flex justify-between text-[13px]">
+                  <span style={{ color: 'var(--text-secondary)' }}>Valor:</span>
+                  <span className="font-bold text-[16px]" style={{ color: 'var(--text-primary)' }}>R$ {selectedProduct.custo.toFixed(2)}</span>
+                </div>
+                <div className="flex justify-between text-[11px] p-2 rounded-lg bg-emerald-50 border border-emerald-100">
+                  <span className="text-emerald-700">Você ganhará:</span>
+                  <span className="font-bold text-emerald-700">+{selectedProduct.bonus_pts} pontos</span>
+                </div>
+              </div>
+
+              <button 
+                onClick={handleFinishPurchase}
+                disabled={isProcessing}
+                className="w-full py-3.5 rounded-xl text-white font-bold text-[14px] transition-all bg-emerald-600 hover:bg-emerald-700 shadow-lg shadow-emerald-100 disabled:opacity-50"
+              >
+                {isProcessing ? 'Aguardando Pagamento...' : 'Simular Pagamento Confirmado'}
+              </button>
+              
+              <button 
+                onClick={() => setShowCheckout(false)}
+                disabled={isProcessing}
+                className="mt-4 text-[12px] font-medium opacity-60 hover:opacity-100 transition-opacity"
+                style={{ color: 'var(--text-secondary)' }}
+              >
+                Cancelar
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* CSS para animação fadeIn */}
       <style>{`
         @keyframes fadeIn {
@@ -459,5 +592,25 @@ export default function MarketplaceView() {
         }
       `}</style>
     </div>
+  );
+}
+
+// Icone Loader localmente se não importado
+function Loader2(props) {
+  return (
+    <svg
+      {...props}
+      xmlns="http://www.w3.org/2000/svg"
+      width="24"
+      height="24"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
+      <path d="M21 12a9 9 0 1 1-6.219-8.56" />
+    </svg>
   );
 }

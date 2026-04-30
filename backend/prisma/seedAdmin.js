@@ -15,7 +15,8 @@ async function main() {
     return;
   }
 
-  const senhaHash = await bcrypt.hash('admin123', 12);
+  const adminPassword = process.env.ADMIN_PASSWORD || 'admin123';
+  const senhaHash = await bcrypt.hash(adminPassword, 12);
 
   await prisma.user.create({
     data: {
@@ -27,7 +28,7 @@ async function main() {
     }
   });
 
-  console.log(`🎉 Admin criado com sucesso: ${adminEmail} / Senha: admin123`);
+  console.log(`🎉 Admin criado com sucesso: ${adminEmail} / Senha: ${adminPassword}`);
 }
 
 main()

@@ -15,6 +15,7 @@ export default function AdminSidebar({ onLogout, currentView, onViewChange }) {
   const navItems = [
     { id: 'dashboard', icon: <LayoutDashboard size={15} />, label: 'Dashboard' },
     { id: 'doacoes', icon: <HeartHandshake size={15} />, label: 'Gestão de Doações' },
+    { id: 'marketplace', icon: <ShieldCheck size={15} />, label: 'Marketplace' },
     { id: 'ongs', icon: <Building2 size={15} />, label: 'ONGs Parceiras' },
     { id: 'usuarios', icon: <Users size={15} />, label: 'Usuários' },
     { id: 'relatorios', icon: <FileText size={15} />, label: 'Relatórios' },

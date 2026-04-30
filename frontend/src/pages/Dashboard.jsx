@@ -130,6 +130,7 @@ export default function Dashboard() {
               onNewDonation={() => navigateTo('donate_type')}
               onViewRanking={() => navigateTo('ranking')}
               onViewAllDonations={() => navigateTo('donations')}
+              navigateTo={navigateTo}
             />
           )}
 
@@ -220,7 +221,7 @@ export default function Dashboard() {
           )}
 
           {/* ── Outras Views ── */}
-          {currentView === 'marketplace' && <MarketplaceView cupons={cupons} usuario={usuario} />}
+          {currentView === 'marketplace' && <MarketplaceView cupons={cupons} usuario={usuario} refreshUser={refreshUser} />}
           {currentView === 'ranking' && <RankingView />}
           {currentView === 'donations' && <DonationsView doacoes={doacoes} />}
           {currentView === 'receipts' && <ReceiptsView doacoes={doacoes} />}

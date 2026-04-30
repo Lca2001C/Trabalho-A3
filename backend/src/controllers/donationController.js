@@ -123,8 +123,7 @@ async function createDonation(req, res) {
     // ── Calcula os pontos a serem creditados ──
     const pontosGerados = await calcularPontos(userId, tipo, valor, req.body.isCampaign);
 
-    // ── Transação atômica: cria doação + credita pontos ──
-    // Se qualquer operação falhar, ambas são revertidas automaticamente.
+    // ── Transação atômica ──
     const resultado = await prisma.$transaction(async (tx) => {
       // 1. Cria o registro da doação
       const doacao = await tx.donation.create({
@@ -134,18 +133,22 @@ async function createDonation(req, res) {
           tipo,
           item: item || null,
           valor: valor || null,
-          status: 'aprovada', // Doações são aprovadas automaticamente nesta versão
+          // Doações financeiras são aprovadas na hora (simulando gateway), 
+          // itens ficam pendentes até conferência.
+          status: tipo === 'financeira' ? 'aprovada' : 'pendente',
           pontosGerados,
         },
       });
 
-      // 2. Credita os pontos ao doador (incremento atômico)
-      await tx.user.update({
-        where: { id: userId },
-        data: {
-          pontos: { increment: pontosGerados },
-        },
-      });
+      // 2. Só credita os pontos agora se for financeira (aprovada)
+      if (tipo === 'financeira') {
+        await tx.user.update({
+          where: { id: userId },
+          data: {
+            pontos: { increment: pontosGerados },
+          },
+        });
+      }
 
       return doacao;
     });
@@ -159,7 +162,10 @@ async function createDonation(req, res) {
         status: resultado.status,
         criadoEm: resultado.criadoEm,
       },
-      pontosGanhos: pontosGerados,
+      pontosGanhos: resultado.status === 'aprovada' ? pontosGerados : 0,
+      mensagem: resultado.status === 'pendente' 
+        ? 'Sua doação foi registrada! Os pontos serão creditados assim que a ONG confirmar o recebimento.'
+        : 'Doação realizada com sucesso!'
     });
   } catch (error) {
     console.error('❌ Erro ao criar doação:', error);
@@ -321,9 +327,23 @@ async function confirmDonationReceipt(req, res) {
     if (!doacao) return res.status(404).json({ erro: 'Doação não encontrada.' });
     if (doacao.institutionId !== institutionId) return res.status(403).json({ erro: 'Doação não destinada a sua ong.' });
 
-    const doacaoAtualizada = await prisma.donation.update({
-      where: { id: donationId },
-      data: { status: 'entregue' }
+    const doacaoAtualizada = await prisma.$transaction(async (tx) => {
+      const updated = await tx.donation.update({
+        where: { id: donationId },
+        data: { status: 'entregue' }
+      });
+
+      // Se era um item pendente, credita os pontos agora
+      if (doacao.tipo === 'item' && doacao.status === 'pendente') {
+        await tx.user.update({
+          where: { id: doacao.userId },
+          data: {
+            pontos: { increment: doacao.pontosGerados }
+          }
+        });
+      }
+
+      return updated;
     });
 
     return res.json({ mensagem: 'Doação marcada como entregue.', doacao: doacaoAtualizada });
@@ -384,10 +404,24 @@ async function updateDonationStatus(req, res) {
       return res.status(404).json({ erro: 'Doação não encontrada.' });
     }
 
-    // ── Atualiza o status ──
-    const doacaoAtualizada = await prisma.donation.update({
-      where: { id: donationId },
-      data: { status },
+    // ── Atualiza o status e credita pontos se necessário ──
+    const doacaoAtualizada = await prisma.$transaction(async (tx) => {
+      const updated = await tx.donation.update({
+        where: { id: donationId },
+        data: { status },
+      });
+
+      // Se mudou para aprovada e não era antes, credita pontos
+      if (status === 'aprovada' && doacaoExistente.status !== 'aprovada') {
+        await tx.user.update({
+          where: { id: doacaoExistente.userId },
+          data: {
+            pontos: { increment: doacaoExistente.pontosGerados }
+          }
+        });
+      }
+
+      return updated;
     });
 
     return res.json({

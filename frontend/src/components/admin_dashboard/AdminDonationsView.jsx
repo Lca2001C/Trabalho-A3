@@ -41,6 +41,15 @@ export default function AdminDonationsView() {
     }, 350);
   };
 
+  const handleUpdateStatus = async (id, newStatus) => {
+    try {
+      await api.patch(`/api/admin/donations/${id}/status`, { status: newStatus });
+      setDoacoes(prev => prev.map(d => d.id === id ? { ...d, status: newStatus } : d));
+    } catch (err) {
+      alert('Erro ao atualizar status');
+    }
+  };
+
   const handleLoadMore = () => {
     const nextPage = page + 1;
     setPage(nextPage);
@@ -88,7 +97,7 @@ export default function AdminDonationsView() {
           <table className="w-full text-left border-collapse">
             <thead>
               <tr className="border-b" style={{ borderColor: 'var(--border)' }}>
-                {['Data', 'Doador', 'Tipo', 'Valor/Itens', 'Destinatário'].map(h => (
+                {['Data', 'Doador', 'Tipo', 'Valor/Itens', 'Destinatário', 'Status', 'Ações'].map(h => (
                   <th key={h} className="px-6 py-4 text-[11px] uppercase font-bold tracking-wider" 
                       style={{ color: 'var(--text-muted)' }}>{h}</th>
                 ))}
@@ -130,6 +139,27 @@ export default function AdminDonationsView() {
                       </div>
                     </td>
                     <td className="px-6 py-4 text-[13px]" style={{ color: 'var(--text-secondary)' }}>{d.destinatario}</td>
+                    <td className="px-6 py-4">
+                      <span className="text-[10px] px-2 py-0.5 rounded-md font-bold uppercase"
+                            style={{ 
+                              backgroundColor: d.status === 'aprovada' ? 'var(--green-light)' : d.status === 'pendente' ? 'var(--bg-tertiary)' : '#fee2e2',
+                              color: d.status === 'aprovada' ? 'var(--green-text)' : d.status === 'pendente' ? 'var(--text-secondary)' : '#b91c1c'
+                            }}>
+                        {d.status}
+                      </span>
+                    </td>
+                    <td className="px-6 py-4 text-right">
+                      {d.status === 'pendente' && (
+                        <div className="flex items-center gap-2">
+                          <button 
+                            onClick={() => handleUpdateStatus(d.id, 'aprovada')}
+                            className="px-3 py-1 rounded-md bg-emerald-500 text-white text-[11px] font-bold hover:bg-emerald-600 transition-colors"
+                          >
+                            Aprovar
+                          </button>
+                        </div>
+                      )}
+                    </td>
                   </tr>
                 ))
               }

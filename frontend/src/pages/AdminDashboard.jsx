@@ -12,6 +12,7 @@ import AdminOngsView from '../components/admin_dashboard/AdminOngsView';
 import AdminReportsView from '../components/admin_dashboard/AdminReportsView';
 import AdminUsersView from '../components/admin_dashboard/AdminUsersView';
 import AdminSettingsView from '../components/admin_dashboard/AdminSettingsView';
+import AdminMarketplaceView from '../components/admin_dashboard/AdminMarketplaceView';
 
 export default function AdminDashboard() {
   const [activeTab, setActiveTab] = useState('dashboard');
@@ -45,6 +46,7 @@ export default function AdminDashboard() {
           <div className="max-w-7xl mx-auto">
             {activeTab === 'dashboard' && <AdminDashboardOverview setActiveTab={handleTabChange} />}
             {activeTab === 'doacoes' && <AdminDonationsView />}
+            {activeTab === 'marketplace' && <AdminMarketplaceView />}
             {activeTab === 'ongs' && <AdminOngsView selectedONG={selectedONG} setSelectedONG={setSelectedONG} />}
             {activeTab === 'relatorios' && <AdminReportsView />}
             {activeTab === 'usuarios' && <AdminUsersView />}

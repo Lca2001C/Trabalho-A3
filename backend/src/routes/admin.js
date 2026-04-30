@@ -17,4 +17,9 @@ router.post('/institutions/:id/reject', adminController.rejectInstitution);
 router.post('/users/:id/promote', adminController.promoteToAdmin);
 router.delete('/users/:id/promote', adminController.demoteAdmin);
 
+// Marketplace Management
+router.post('/rewards', adminController.createReward);
+router.patch('/rewards/:id', adminController.updateReward);
+router.delete('/rewards/:id', adminController.deleteReward);
+
 module.exports = router;

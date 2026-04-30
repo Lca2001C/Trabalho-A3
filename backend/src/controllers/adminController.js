@@ -355,6 +355,82 @@ async function getReports(req, res) {
   }
 }
 
+// ─── Marketplace: Criar Recompensa ──────────────────────────────────────────
+async function createReward(req, res) {
+  try {
+    const { nome, descricao, custoPontos, tipo, estoque, preco, pontosBonus, imagemUrl } = req.body;
+
+    if (!nome || !tipo) {
+      return res.status(400).json({ erro: 'Nome e tipo são obrigatórios.' });
+    }
+
+    const reward = await prisma.reward.create({
+      data: {
+        nome,
+        descricao,
+        custoPontos: parseInt(custoPontos) || 0,
+        tipo,
+        estoque: parseInt(estoque) || 0,
+        preco: preco ? parseFloat(preco) : null,
+        pontosBonus: pontosBonus ? parseInt(pontosBonus) : null,
+        imagemUrl,
+        ativo: true
+      }
+    });
+
+    return res.status(201).json(reward);
+  } catch (error) {
+    console.error('❌ Erro ao criar recompensa:', error);
+    return res.status(500).json({ erro: 'Erro interno ao criar produto.' });
+  }
+}
+
+// ─── Marketplace: Atualizar Recompensa ──────────────────────────────────────
+async function updateReward(req, res) {
+  try {
+    const { id } = req.params;
+    const { nome, descricao, custoPontos, tipo, estoque, preco, pontosBonus, ativo, imagemUrl } = req.body;
+
+    const reward = await prisma.reward.update({
+      where: { id: parseInt(id) },
+      data: {
+        nome,
+        descricao,
+        custoPontos: custoPontos !== undefined ? parseInt(custoPontos) : undefined,
+        tipo,
+        estoque: estoque !== undefined ? parseInt(estoque) : undefined,
+        preco: preco !== undefined ? (preco ? parseFloat(preco) : null) : undefined,
+        pontosBonus: pontosBonus !== undefined ? (pontosBonus ? parseInt(pontosBonus) : null) : undefined,
+        imagemUrl: imagemUrl !== undefined ? imagemUrl : undefined,
+        ativo: ativo !== undefined ? !!ativo : undefined
+      }
+    });
+
+    return res.json(reward);
+  } catch (error) {
+    console.error('❌ Erro ao atualizar recompensa:', error);
+    return res.status(500).json({ erro: 'Erro interno ao atualizar produto.' });
+  }
+}
+
+// ─── Marketplace: Excluir Recompensa ────────────────────────────────────────
+async function deleteReward(req, res) {
+  try {
+    const { id } = req.params;
+
+    // Soft delete ou Hard delete? Vou usar Hard delete por simplicidade, 
+    // mas em prod geralmente usamos soft delete (ativo=false).
+    await prisma.reward.delete({
+      where: { id: parseInt(id) }
+    });
+
+    return res.json({ mensagem: 'Produto removido com sucesso.' });
+  } catch (error) {
+    console.error('❌ Erro ao excluir recompensa:', error);
+    return res.status(500).json({ erro: 'Erro interno ao remover produto.' });
+  }
+}
+
 module.exports = {
   getAllInstitutions,
   approveInstitution,
@@ -365,4 +441,8 @@ module.exports = {
   promoteToAdmin,
   demoteAdmin,
   getReports,
+  // Rewards
+  createReward,
+  updateReward,
+  deleteReward,
 };

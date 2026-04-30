@@ -8,12 +8,26 @@ export default function OngDonationsView() {
   const [donationsList, setDonationsList] = useState([]);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
+  const fetchDonations = () => {
+    setLoading(true);
     api.get('/api/donations/institution/received')
       .then(res => setDonationsList(res.data.doacoes || []))
       .catch(() => {})
       .finally(() => setLoading(false));
+  };
+
+  useEffect(() => {
+    fetchDonations();
   }, []);
+
+  const handleConfirmReceipt = async (id) => {
+    try {
+      await api.post(`/api/donations/${id}/confirm`);
+      fetchDonations();
+    } catch (err) {
+      alert('Erro ao confirmar recebimento');
+    }
+  };
 
   const filteredDonations = donationsList.filter(donation => {
     // Esconder saques (valores negativos)
@@ -115,6 +129,7 @@ export default function OngDonationsView() {
                 <th className="py-3 px-4 text-xs font-semibold text-gray-500 uppercase tracking-wider">Método</th>
                 <th className="py-3 px-4 text-xs font-semibold text-gray-500 uppercase tracking-wider">Data</th>
                 <th className="py-3 px-4 text-xs font-semibold text-gray-500 uppercase tracking-wider">Status</th>
+                <th className="py-3 px-4 text-xs font-semibold text-gray-500 uppercase tracking-wider text-right">Ações</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-50">
@@ -142,6 +157,16 @@ export default function OngDonationsView() {
                       }`}>
                         {donation.status === 'entregue' ? 'Concluído' : 'Pendente'}
                       </span>
+                    </td>
+                    <td className="py-4 px-4 text-right">
+                      {donation.status === 'pendente' && donation.tipo === 'item' && (
+                        <button 
+                          onClick={() => handleConfirmReceipt(donation.id)}
+                          className="px-3 py-1 bg-green-600 hover:bg-green-700 text-white text-xs font-bold rounded transition-colors shadow-sm"
+                        >
+                          Confirmar
+                        </button>
+                      )}
                     </td>
                   </tr>
                 ))

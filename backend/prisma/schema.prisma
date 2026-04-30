@@ -88,8 +88,11 @@ model Reward {
   id          Int      @id @default(autoincrement())
   nome        String
   descricao   String?
-  custoPontos Int      // Quantidade de pontos necessária para resgatar
-  tipo        String   // "cupom" | "giftcard"
+  custoPontos Int      @default(0) // Quantidade de pontos necessária para resgatar
+  preco       Float?   // Preço em R$ (para itens de compra direta)
+  pontosBonus Int?     // Pontos ganhos ao comprar este item
+  imagemUrl   String?  // URL da imagem do produto (Cloudinary ou local)
+  tipo        String   // "cupom" | "giftcard" | "brinde" | "experiencia" | "artesanato" | "digital"
   estoque     Int      @default(0) // Quantidade disponível
   ativo       Boolean  @default(true) // false = retirado do marketplace
 
