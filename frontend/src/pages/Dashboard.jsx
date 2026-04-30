@@ -7,6 +7,7 @@ import { useAuth } from '../contexts/AuthContext';
 import Sidebar from '../components/dashboard/Sidebar';
 import Topbar from '../components/dashboard/Topbar';
 import DashboardOverviewV2 from '../components/dashboard/DashboardOverviewV2';
+import ProfileView from '../components/dashboard/ProfileView';
 
 // Componentes existentes do Wizard e outras Views
 import { 
@@ -114,6 +115,7 @@ export default function Dashboard() {
         <Topbar 
           usuario={usuario} 
           onNewDonation={() => navigateTo('donate_type')} 
+          onProfileClick={() => navigateTo('profile')}
         />
 
         {/* Views Dinâmicas */}
@@ -128,6 +130,13 @@ export default function Dashboard() {
               onNewDonation={() => navigateTo('donate_type')}
               onViewRanking={() => navigateTo('ranking')}
               onViewAllDonations={() => navigateTo('donations')}
+            />
+          )}
+
+          {currentView === 'profile' && (
+            <ProfileView 
+              usuario={usuario} 
+              onUpdate={refreshUser} 
             />
           )}
 

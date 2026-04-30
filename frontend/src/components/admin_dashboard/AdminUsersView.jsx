@@ -1,14 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { Search, MoreVertical, ShieldCheck, ShieldOff, Loader2 } from 'lucide-react';
-import { Card } from './SharedComponents';
+import { Search, ShieldCheck, ShieldOff, Loader2, User, Building2, UserCog, AlertCircle } from 'lucide-react';
 import api from '../../services/api';
-
-const TIPO_STYLE = {
-  Administrador: 'bg-purple-100 text-purple-700',
-  ONG:           'bg-green-100 text-green-700',
-  Doador:        'bg-gray-100 text-gray-700',
-};
-const STATUS_COLOR = { Ativo: 'text-green-600', Pendente: 'text-amber-500', Inativo: 'text-red-500' };
+import Swal from 'sweetalert2';
 
 export default function AdminUsersView() {
   const [tab, setTab]         = useState('Todos');
@@ -32,137 +25,179 @@ export default function AdminUsersView() {
   }, [tab, search]);
 
   useEffect(() => {
-    const t = setTimeout(fetchUsers, 300); // debounce busca
+    const t = setTimeout(fetchUsers, 300);
     return () => clearTimeout(t);
   }, [fetchUsers]);
 
   const handlePromote = async (user) => {
-    setActionId(user.id);
-    try {
-      await api.post(`/api/admin/users/${user.id}/promote`);
-      fetchUsers();
-    } catch (e) {
-      alert(e.response?.data?.erro ?? 'Erro ao promover usuário.');
-    } finally {
-      setActionId(null);
+    const confirm = await Swal.fire({
+      title: 'Promover Usuário?',
+      text: `Deseja dar privilégios de Administrador para "${user.nome}"?`,
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonColor: 'var(--green-primary)',
+      confirmButtonText: 'Sim, promover!'
+    });
+
+    if (confirm.isConfirmed) {
+      setActionId(user.id);
+      try {
+        await api.post(`/api/admin/users/${user.id}/promote`);
+        fetchUsers();
+        Swal.fire('Promovido!', 'Usuário agora é Administrador.', 'success');
+      } catch (e) {
+        Swal.fire('Erro', e.response?.data?.erro ?? 'Erro ao promover.', 'error');
+      } finally {
+        setActionId(null);
+      }
     }
   };
 
   const handleDemote = async (user) => {
-    if (!confirm(`Remover privilégio admin de "${user.nome}"?`)) return;
-    setActionId(user.id);
-    try {
-      await api.delete(`/api/admin/users/${user.id}/promote`);
-      fetchUsers();
-    } catch (e) {
-      alert(e.response?.data?.erro ?? 'Erro ao revogar admin.');
-    } finally {
-      setActionId(null);
+    const confirm = await Swal.fire({
+      title: 'Revogar Privilégios?',
+      text: `Remover acesso Admin de "${user.nome}"?`,
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonColor: '#ef4444',
+      confirmButtonText: 'Sim, revogar!'
+    });
+
+    if (confirm.isConfirmed) {
+      setActionId(user.id);
+      try {
+        await api.delete(`/api/admin/users/${user.id}/promote`);
+        fetchUsers();
+        Swal.fire('Revogado', 'Privilégios removidos com sucesso.', 'info');
+      } catch (e) {
+        Swal.fire('Erro', e.response?.data?.erro ?? 'Erro ao revogar.', 'error');
+      } finally {
+        setActionId(null);
+      }
     }
   };
 
+  const getRoleBadge = (tipo) => {
+    const styles = {
+      Administrador: { bg: 'var(--amber-light)', color: 'var(--amber-text)', icon: <UserCog size={12} /> },
+      ONG: { bg: 'var(--green-light)', color: 'var(--green-text)', icon: <Building2 size={12} /> },
+      Doador: { bg: 'var(--bg-tertiary)', color: 'var(--text-secondary)', icon: <User size={12} /> }
+    };
+    const s = styles[tipo] || styles.Doador;
+    return (
+      <span className="flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[11px] font-bold uppercase tracking-wider w-fit"
+            style={{ backgroundColor: s.bg, color: s.color }}>
+        {s.icon} {tipo}
+      </span>
+    );
+  };
+
   return (
-    <Card className="h-full min-h-[500px]">
-      <div className="flex justify-between items-center mb-6">
-        <h2 className="text-xl font-bold text-gray-800">Gerenciar Usuários</h2>
+    <div className="animate-in fade-in duration-500">
+      <div className="flex flex-col md:flex-row md:items-center justify-between mb-8 gap-4">
+        <h2 className="text-[20px] font-medium" style={{ color: 'var(--text-primary)' }}>Gerenciar Usuários</h2>
         <div className="relative">
-          <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+          <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2" style={{ color: 'var(--text-muted)' }} />
           <input
             type="text"
             value={search}
             onChange={e => setSearch(e.target.value)}
-            placeholder="Buscar usuário..."
-            className="pl-9 pr-4 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-green-500 w-64"
+            placeholder="Nome ou e-mail..."
+            className="pl-10 pr-4 py-2.5 rounded-xl text-[13px] border w-full md:w-64 transition-all"
+            style={{ backgroundColor: 'var(--bg-primary)', borderColor: 'var(--border)', color: 'var(--text-primary)' }}
           />
         </div>
       </div>
 
-      <div className="flex space-x-6 border-b border-gray-200 mb-6">
+      <div className="flex gap-4 p-1 rounded-xl mb-8 w-fit" style={{ backgroundColor: 'var(--bg-tertiary)' }}>
         {tabs.map(t => (
           <button
             key={t}
             onClick={() => setTab(t)}
-            className={`pb-3 text-sm font-medium transition-colors ${
-              tab === t ? 'text-green-600 border-b-2 border-green-600' : 'text-gray-500 hover:text-gray-700'
-            }`}
+            className="px-4 py-2 rounded-lg text-[12px] font-medium transition-all"
+            style={{ 
+              backgroundColor: tab === t ? 'var(--bg-primary)' : 'transparent',
+              color: tab === t ? 'var(--green-primary)' : 'var(--text-secondary)',
+              boxShadow: tab === t ? 'var(--shadow-card)' : 'none'
+            }}
           >
             {t}
           </button>
         ))}
       </div>
 
-      <div className="overflow-x-auto">
-        <table className="w-full text-left border-collapse">
-          <thead>
-            <tr className="border-b border-gray-100">
-              {['Nome', 'E-mail', 'Tipo', 'Status', ''].map(h => (
-                <th key={h} className="pb-3 text-sm font-medium text-gray-500">{h}</th>
-              ))}
-            </tr>
-          </thead>
-          <tbody>
-            {loading ? (
-              Array(5).fill(0).map((_, i) => (
-                <tr key={i} className="border-b border-gray-50">
-                  {Array(5).fill(0).map((_, j) => (
-                    <td key={j} className="py-4">
-                      <div className="animate-pulse h-4 bg-gray-200 rounded w-full" />
-                    </td>
-                  ))}
-                </tr>
-              ))
-            ) : users.length > 0 ? (
-              users.map(user => (
-                <tr key={user.id} className="border-b border-gray-50 hover:bg-gray-50 transition-colors">
-                  <td className="py-4 text-sm font-medium text-gray-900">{user.nome}</td>
-                  <td className="py-4 text-sm text-gray-500">{user.email}</td>
-                  <td className="py-4 text-sm">
-                    <span className={`px-2 py-1 rounded-md text-xs font-medium ${TIPO_STYLE[user.tipo] ?? 'bg-gray-100 text-gray-700'}`}>
-                      {user.tipo}
-                    </span>
-                  </td>
-                  <td className="py-4 text-sm">
-                    <span className={`font-medium ${STATUS_COLOR[user.status] ?? 'text-gray-500'}`}>
-                      {user.status}
-                    </span>
-                  </td>
-                  <td className="py-4 text-right">
-                    {actionId === user.id ? (
-                      <Loader2 className="w-4 h-4 animate-spin text-gray-400 ml-auto" />
-                    ) : user.tipo === 'Administrador' ? (
-                      <button
-                        onClick={() => handleDemote(user)}
-                        title="Revogar Admin"
-                        className="text-red-400 hover:text-red-600 p-1 ml-auto flex"
-                      >
-                        <ShieldOff className="w-4 h-4" />
-                      </button>
-                    ) : user.tipo === 'Doador' ? (
-                      <button
-                        onClick={() => handlePromote(user)}
-                        title="Promover a Admin"
-                        className="text-gray-400 hover:text-purple-600 p-1 ml-auto flex"
-                      >
-                        <ShieldCheck className="w-4 h-4" />
-                      </button>
-                    ) : (
-                      <button className="text-gray-300 p-1">
-                        <MoreVertical className="w-4 h-4" />
-                      </button>
-                    )}
-                  </td>
-                </tr>
-              ))
-            ) : (
-              <tr>
-                <td colSpan="5" className="py-8 text-center text-gray-500">
-                  Nenhum usuário encontrado.
-                </td>
+      <div className="card-base overflow-hidden">
+        <div className="overflow-x-auto">
+          <table className="w-full text-left border-collapse">
+            <thead>
+              <tr className="border-b" style={{ borderColor: 'var(--border)' }}>
+                {['Usuário', 'E-mail', 'Tipo de Conta', 'Status', 'Ações'].map(h => (
+                  <th key={h} className="px-6 py-4 text-[11px] uppercase font-bold tracking-wider" 
+                      style={{ color: 'var(--text-muted)' }}>{h}</th>
+                ))}
               </tr>
-            )}
-          </tbody>
-        </table>
+            </thead>
+            <tbody className="divide-y" style={{ borderColor: 'var(--border)' }}>
+              {loading ? (
+                Array(5).fill(0).map((_, i) => (
+                  <tr key={i}>
+                    {Array(5).fill(0).map((_, j) => (
+                      <td key={j} className="px-6 py-4"><div className="animate-pulse h-4 bg-gray-200 dark:bg-gray-700 rounded w-full" /></td>
+                    ))}
+                  </tr>
+                ))
+              ) : users.length > 0 ? (
+                users.map(user => (
+                  <tr key={user.id} className="hover:bg-[var(--bg-secondary)] transition-colors">
+                    <td className="px-6 py-4">
+                      <div className="flex items-center gap-3">
+                        <div className="w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold text-white shadow-sm"
+                             style={{ background: 'linear-gradient(135deg, var(--green-primary), var(--green-dark))' }}>
+                          {user.nome.charAt(0)}
+                        </div>
+                        <span className="text-[13px] font-medium" style={{ color: 'var(--text-primary)' }}>{user.nome}</span>
+                      </div>
+                    </td>
+                    <td className="px-6 py-4 text-[13px]" style={{ color: 'var(--text-secondary)' }}>{user.email}</td>
+                    <td className="px-6 py-4">{getRoleBadge(user.tipo)}</td>
+                    <td className="px-6 py-4">
+                      <div className="flex items-center gap-1.5 text-[13px] font-medium" 
+                           style={{ color: user.status === 'Ativo' ? 'var(--green-primary)' : 'var(--text-muted)' }}>
+                        <div className={`w-1.5 h-1.5 rounded-full ${user.status === 'Ativo' ? 'bg-[var(--green-primary)]' : 'bg-[var(--text-muted)] opacity-50'}`} />
+                        {user.status}
+                      </div>
+                    </td>
+                    <td className="px-6 py-4 text-right">
+                      {actionId === user.id ? (
+                        <Loader2 className="w-4 h-4 animate-spin text-gray-400 ml-auto" />
+                      ) : user.tipo === 'Administrador' ? (
+                        <button onClick={() => handleDemote(user)}
+                                className="p-2 rounded-lg text-red-400 hover:bg-red-50 hover:text-red-600 transition-all ml-auto block"
+                                title="Revogar Admin">
+                          <ShieldOff size={16} />
+                        </button>
+                      ) : (
+                        <button onClick={() => handlePromote(user)}
+                                className="p-2 rounded-lg text-slate-400 hover:bg-emerald-50 hover:text-emerald-600 transition-all ml-auto block"
+                                title="Promover a Admin">
+                          <ShieldCheck size={16} />
+                        </button>
+                      )}
+                    </td>
+                  </tr>
+                ))
+              ) : (
+                <tr>
+                  <td colSpan="5" className="py-20 text-center">
+                    <AlertCircle size={40} className="mx-auto mb-3 opacity-20" />
+                    <p className="text-[14px]" style={{ color: 'var(--text-muted)' }}>Nenhum usuário encontrado.</p>
+                  </td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+        </div>
       </div>
-    </Card>
+    </div>
   );
 }

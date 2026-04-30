@@ -1,25 +1,23 @@
 import React from 'react';
-import { Link, useLocation } from 'react-router-dom';
 import { 
   LayoutDashboard, 
-  Gift, 
-  Trophy, 
-  ShoppingBag, 
+  HeartHandshake, 
+  Building2, 
+  Users, 
   FileText, 
-  User, 
+  Settings, 
   LogOut,
-  HeartHandshake
+  ShieldCheck
 } from 'lucide-react';
 
-export default function Sidebar({ onLogout, currentView, onViewChange }) {
-  const location = useLocation();
-
+export default function AdminSidebar({ onLogout, currentView, onViewChange }) {
+  
   const navItems = [
-    { id: 'dashboard', icon: <LayoutDashboard size={15} />, label: 'Início' },
-    { id: 'donations', icon: <Gift size={15} />, label: 'Minhas doações' },
-    { id: 'ranking', icon: <Trophy size={15} />, label: 'Ranking' },
-    { id: 'marketplace', icon: <ShoppingBag size={15} />, label: 'Marketplace' },
-    { id: 'receipts', icon: <FileText size={15} />, label: 'Comprovantes' },
+    { id: 'dashboard', icon: <LayoutDashboard size={15} />, label: 'Dashboard' },
+    { id: 'doacoes', icon: <HeartHandshake size={15} />, label: 'Gestão de Doações' },
+    { id: 'ongs', icon: <Building2 size={15} />, label: 'ONGs Parceiras' },
+    { id: 'usuarios', icon: <Users size={15} />, label: 'Usuários' },
+    { id: 'relatorios', icon: <FileText size={15} />, label: 'Relatórios' },
   ];
 
   return (
@@ -30,18 +28,16 @@ export default function Sidebar({ onLogout, currentView, onViewChange }) {
              borderRight: '0.5px solid var(--border)' 
            }}>
       
-      {/* Logo Section */}
       <div className="p-6 mb-2 flex items-center gap-3">
         <div className="w-8 h-8 rounded-full flex items-center justify-center shadow-sm"
              style={{ backgroundColor: 'var(--green-primary)' }}>
-          <HeartHandshake size={18} className="text-white" />
+          <ShieldCheck size={18} className="text-white" />
         </div>
-        <span className="text-[15px] font-medium" style={{ color: 'var(--text-primary)' }}>
-          ConectaBem
+        <span className="text-[15px] font-bold tracking-tight" style={{ color: 'var(--text-primary)' }}>
+          Admin Panel
         </span>
       </div>
 
-      {/* Navigation */}
       <nav className="flex-1 px-0 flex flex-col gap-0.5">
         {navItems.map((item) => {
           const active = currentView === item.id;
@@ -70,20 +66,14 @@ export default function Sidebar({ onLogout, currentView, onViewChange }) {
           );
         })}
 
-        {/* Bottom Section */}
         <div className="mt-auto mb-6">
           <div className="mx-4 mb-2" style={{ borderTop: '0.5px solid var(--border)' }} />
           
-          <button onClick={() => onViewChange('profile')}
+          <button onClick={() => onViewChange('configuracoes')}
                   className="flex items-center gap-[10px] py-[9px] px-[18px] w-full transition-all duration-150 group"
-                  style={{ 
-                    color: currentView === 'profile' ? 'var(--green-dark)' : 'var(--text-secondary)',
-                    backgroundColor: currentView === 'profile' ? 'var(--green-light)' : 'transparent',
-                    borderLeft: currentView === 'profile' ? '2.5px solid var(--green-primary)' : '2.5px solid transparent',
-                    fontSize: '13px' 
-                  }}>
-            <span style={{ opacity: currentView === 'profile' ? 1 : 0.6 }} className="group-hover:opacity-100"><User size={15} /></span>
-            Perfil
+                  style={{ color: 'var(--text-secondary)', fontSize: '13px' }}>
+            <span className="opacity-60 group-hover:opacity-100"><Settings size={15} /></span>
+            Configurações
           </button>
 
           <button onClick={onLogout}

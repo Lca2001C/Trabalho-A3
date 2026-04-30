@@ -2,7 +2,7 @@ import React from 'react';
 import { useTheme } from '../../contexts/ThemeContext';
 import { Sun, Moon, Plus } from 'lucide-react';
 
-export default function Topbar({ usuario, onNewDonation }) {
+export default function Topbar({ usuario, onNewDonation, onProfileClick }) {
   const { theme, toggleTheme } = useTheme();
 
   const getIniciais = (nome) => {
@@ -50,14 +50,27 @@ export default function Topbar({ usuario, onNewDonation }) {
           Nova Doação
         </button>
 
-        {/* Avatar */}
-        <div className="w-[34px] h-[34px] rounded-full flex items-center justify-center border text-[12px] font-medium"
-             style={{ 
-               backgroundColor: 'var(--green-light)', 
-               borderColor: 'var(--green-dark)',
-               color: 'var(--green-text)'
-             }}>
-          {getIniciais(usuario?.nome)}
+        {/* Avatar e Perfil */}
+        <div 
+          onClick={onProfileClick}
+          className="flex items-center gap-2 pl-2 border-l ml-2 border-slate-200 cursor-pointer group"
+        >
+          <div className="flex items-center gap-3 p-1 rounded-2xl hover:bg-[var(--bg-secondary)] transition-colors group">
+            <div className="w-[34px] h-[34px] rounded-full flex items-center justify-center border text-[12px] font-medium transition-transform group-hover:scale-105"
+                 style={{ 
+                   backgroundColor: 'var(--green-light)', 
+                   borderColor: 'var(--green-dark)',
+                   color: 'var(--green-text)'
+                 }}>
+              {getIniciais(usuario?.nome)}
+            </div>
+            <div className="hidden sm:flex flex-col">
+              <span className="text-[10px] font-bold text-slate-400 uppercase tracking-tighter">Meu Perfil</span>
+              <span className="text-sm font-bold text-[var(--text-primary)] -mt-0.5">
+                {usuario?.nome?.split(' ')[0] || 'Usuário'}
+              </span>
+            </div>
+          </div>
         </div>
       </div>
     </header>

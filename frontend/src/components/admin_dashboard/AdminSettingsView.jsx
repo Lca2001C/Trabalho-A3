@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { Trash2, Loader2, CheckCircle2, AlertCircle } from 'lucide-react';
-import { Card } from './SharedComponents';
+import { Trash2, Loader2, UserPlus, ShieldCheck, Mail, Info } from 'lucide-react';
 import api from '../../services/api';
+import Swal from 'sweetalert2';
 
 export default function AdminSettingsView() {
   const [admins, setAdmins]         = useState([]);
@@ -9,159 +9,181 @@ export default function AdminSettingsView() {
   const [newEmail, setNewEmail]     = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [removingId, setRemovingId] = useState(null);
-  const [feedback, setFeedback]     = useState(null); // { type, message }
-
-  const flash = (type, message) => {
-    setFeedback({ type, message });
-    setTimeout(() => setFeedback(null), 4000);
-  };
 
   const fetchAdmins = useCallback(() => {
     setLoading(true);
-    // 'Administradores' é a chave esperada pelo roleMap no adminController.js
     api.get('/api/admin/users', { params: { role: 'Administradores' } })
       .then(res => setAdmins(res.data))
-      .catch(() => flash('error', 'Erro ao carregar administradores.'))
+      .catch(() => Swal.fire('Erro', 'Não foi possível carregar os administradores.', 'error'))
       .finally(() => setLoading(false));
   }, []);
 
   useEffect(() => { fetchAdmins(); }, [fetchAdmins]);
 
-  // ── Adicionar admin: busca o usuário pelo e-mail e promove ──
   const handleAddAdmin = async (e) => {
     e.preventDefault();
     if (!newEmail.trim()) return;
+    
     setSubmitting(true);
     try {
-      // 1. Busca o usuário pelo e-mail
       const res = await api.get(`/api/admin/users?search=${encodeURIComponent(newEmail.trim())}`);
       const user = res.data.find(u => u.email.toLowerCase() === newEmail.trim().toLowerCase());
+      
       if (!user) {
-        flash('error', 'Nenhum usuário encontrado com esse e-mail.');
+        Swal.fire('Não encontrado', 'Nenhum usuário com este e-mail foi localizado.', 'warning');
         return;
       }
+      
       if (user.tipo === 'Administrador') {
-        flash('error', 'Este usuário já é administrador.');
+        Swal.fire('Atenção', 'Este usuário já possui privilégios administrativos.', 'info');
         return;
       }
-      // 2. Promove
+
       await api.post(`/api/admin/users/${user.id}/promote`);
-      flash('success', `${user.nome} agora é administrador!`);
+      Swal.fire('Sucesso!', `${user.nome} agora é um administrador do sistema.`, 'success');
       setNewEmail('');
       fetchAdmins();
     } catch (err) {
-      flash('error', err.response?.data?.erro ?? 'Erro ao adicionar administrador.');
+      Swal.fire('Erro', 'Não foi possível adicionar o administrador.', 'error');
     } finally {
       setSubmitting(false);
     }
   };
 
-  // ── Remover admin ──
   const handleRemoveAdmin = async (admin) => {
-    if (!confirm(`Remover privilégio admin de "${admin.nome}"?`)) return;
-    setRemovingId(admin.id);
-    try {
-      await api.delete(`/api/admin/users/${admin.id}/promote`);
-      flash('success', `${admin.nome} removido da lista de administradores.`);
-      fetchAdmins();
-    } catch (err) {
-      flash('error', err.response?.data?.erro ?? 'Erro ao remover administrador.');
-    } finally {
-      setRemovingId(null);
+    const confirm = await Swal.fire({
+      title: 'Remover Acesso?',
+      text: `Deseja remover os privilégios de "${admin.nome}"?`,
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonColor: '#ef4444',
+      confirmButtonText: 'Sim, remover!'
+    });
+
+    if (confirm.isConfirmed) {
+      setRemovingId(admin.id);
+      try {
+        await api.delete(`/api/admin/users/${admin.id}/promote`);
+        Swal.fire('Removido', 'Privilégios revogados com sucesso.', 'success');
+        fetchAdmins();
+      } catch (err) {
+        Swal.fire('Erro', 'Não foi possível remover o administrador.', 'error');
+      } finally {
+        setRemovingId(null);
+      }
     }
   };
 
   return (
-    <div className="space-y-6">
-      <h2 className="text-xl font-bold text-gray-800 mb-4">Configurações do Sistema</h2>
+    <div className="max-w-4xl mx-auto animate-in fade-in duration-500 pb-20">
+      <div className="mb-10">
+        <h2 className="text-[20px] font-medium mb-2" style={{ color: 'var(--text-primary)' }}>Configurações do Sistema</h2>
+        <p className="text-[13px]" style={{ color: 'var(--text-secondary)' }}>Gerencie permissões e acessos administrativos da plataforma.</p>
+      </div>
 
-      <Card className="max-w-3xl">
-        <h3 className="text-lg font-semibold text-gray-800 mb-2">Administradores do Sistema</h3>
-        <p className="text-sm text-gray-500 mb-6">
-          Informe o e-mail de um usuário cadastrado para promovê-lo a administrador. A alteração é persistida imediatamente no banco de dados.
-        </p>
-
-        {/* Feedback banner */}
-        {feedback && (
-          <div className={`flex items-center gap-2 p-3 rounded-lg mb-6 text-sm font-medium border ${
-            feedback.type === 'success'
-              ? 'bg-green-50 border-green-200 text-green-700'
-              : 'bg-red-50 border-red-200 text-red-700'
-          }`}>
-            {feedback.type === 'success'
-              ? <CheckCircle2 className="w-4 h-4 shrink-0" />
-              : <AlertCircle   className="w-4 h-4 shrink-0" />
-            }
-            {feedback.message}
+      <div className="grid grid-cols-1 gap-8">
+        
+        {/* Card: Adicionar Admin */}
+        <div className="card-base p-8">
+          <div className="flex items-center gap-3 mb-6">
+            <div className="p-2 rounded-lg" style={{ backgroundColor: 'var(--green-light)', color: 'var(--green-primary)' }}>
+              <UserPlus size={20} />
+            </div>
+            <h3 className="text-[16px] font-medium" style={{ color: 'var(--text-primary)' }}>Novo Administrador</h3>
           </div>
-        )}
 
-        <form onSubmit={handleAddAdmin} className="flex gap-4 mb-8">
-          <input
-            type="email"
-            value={newEmail}
-            onChange={e => setNewEmail(e.target.value)}
-            placeholder="Digite o e-mail do novo administrador..."
-            className="flex-1 border border-gray-200 rounded-lg px-4 py-2.5 text-sm focus:ring-2 focus:ring-green-500 outline-none bg-gray-50 focus:bg-white transition-colors"
-            required
-          />
-          <button
-            type="submit"
-            disabled={submitting}
-            className="bg-green-600 text-white px-6 py-2.5 rounded-lg text-sm font-medium hover:bg-green-700 transition-colors shadow-sm flex items-center gap-2 disabled:opacity-60"
-          >
-            {submitting ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Adicionar'}
-          </button>
-        </form>
+          <p className="text-[13px] mb-6 leading-relaxed" style={{ color: 'var(--text-secondary)' }}>
+            Informe o e-mail de um usuário cadastrado para promovê-lo. O usuário passará a ter acesso total ao painel de controle.
+          </p>
 
-        <div className="border border-gray-200 rounded-xl overflow-hidden">
-          <table className="w-full text-left">
-            <thead className="bg-gray-50 border-b border-gray-200">
-              <tr>
-                <th className="px-5 py-3 text-sm font-medium text-gray-500">Nome</th>
-                <th className="px-5 py-3 text-sm font-medium text-gray-500">E-mail de Acesso</th>
-                <th className="px-5 py-3 text-sm font-medium text-gray-500 text-right">Ação</th>
-              </tr>
-            </thead>
-            <tbody>
-              {loading ? (
-                Array(2).fill(0).map((_, i) => (
-                  <tr key={i} className="border-b border-gray-100">
-                    <td colSpan="3" className="px-5 py-4">
-                      <div className="animate-pulse h-4 bg-gray-200 rounded w-full" />
+          <form onSubmit={handleAddAdmin} className="flex gap-3">
+            <div className="relative flex-1">
+              <Mail size={16} className="absolute left-3 top-1/2 -translate-y-1/2 opacity-40" />
+              <input
+                type="email"
+                value={newEmail}
+                onChange={e => setNewEmail(e.target.value)}
+                placeholder="email@exemplo.com"
+                className="w-full pl-10 pr-4 py-3 rounded-xl text-[13px] border transition-all"
+                style={{ 
+                  backgroundColor: 'var(--bg-secondary)', 
+                  borderColor: 'var(--border)',
+                  color: 'var(--text-primary)'
+                }}
+                required
+              />
+            </div>
+            <button
+              type="submit"
+              disabled={submitting}
+              className="px-6 py-3 rounded-xl bg-slate-900 text-white text-[13px] font-bold hover:bg-slate-800 transition-all flex items-center gap-2 disabled:opacity-60 shadow-lg shadow-slate-100"
+            >
+              {submitting ? <Loader2 size={16} className="animate-spin" /> : 'Promover'}
+            </button>
+          </form>
+        </div>
+
+        {/* Card: Lista de Admins */}
+        <div className="card-base p-0 overflow-hidden">
+          <div className="p-6 border-b" style={{ borderColor: 'var(--border)' }}>
+            <div className="flex items-center gap-3">
+              <ShieldCheck size={20} style={{ color: 'var(--green-primary)' }} />
+              <h3 className="text-[15px] font-medium" style={{ color: 'var(--text-primary)' }}>Administradores Ativos</h3>
+            </div>
+          </div>
+
+          <div className="overflow-x-auto">
+            <table className="w-full text-left">
+              <thead>
+                <tr style={{ backgroundColor: 'var(--bg-secondary)' }}>
+                  <th className="px-6 py-4 text-[11px] uppercase font-bold tracking-wider" style={{ color: 'var(--text-muted)' }}>Nome</th>
+                  <th className="px-6 py-4 text-[11px] uppercase font-bold tracking-wider" style={{ color: 'var(--text-muted)' }}>E-mail</th>
+                  <th className="px-6 py-4 text-[11px] uppercase font-bold tracking-wider text-right" style={{ color: 'var(--text-muted)' }}>Ação</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y" style={{ borderColor: 'var(--border)' }}>
+                {loading ? (
+                  Array(2).fill(0).map((_, i) => (
+                    <tr key={i}><td colSpan="3" className="px-6 py-10"><div className="animate-pulse h-4 bg-gray-200 dark:bg-gray-700 rounded w-full" /></td></tr>
+                  ))
+                ) : admins.map(admin => (
+                  <tr key={admin.id} className="hover:bg-[var(--bg-secondary)] transition-colors">
+                    <td className="px-6 py-4">
+                      <div className="flex items-center gap-3">
+                        <div className="w-8 h-8 rounded-full flex items-center justify-center bg-[var(--bg-tertiary)] text-[12px] font-bold" style={{ color: 'var(--text-primary)' }}>
+                          {admin.nome.charAt(0)}
+                        </div>
+                        <span className="text-[13px] font-medium" style={{ color: 'var(--text-primary)' }}>{admin.nome}</span>
+                      </div>
                     </td>
-                  </tr>
-                ))
-              ) : admins.length > 0 ? (
-                admins.map(admin => (
-                  <tr key={admin.id} className="border-b border-gray-100 last:border-0 hover:bg-gray-50 transition-colors">
-                    <td className="px-5 py-4 text-sm text-gray-800 font-medium">{admin.nome}</td>
-                    <td className="px-5 py-4 text-sm text-gray-600">{admin.email}</td>
-                    <td className="px-5 py-4 text-sm text-right">
+                    <td className="px-6 py-4 text-[13px]" style={{ color: 'var(--text-secondary)' }}>{admin.email}</td>
+                    <td className="px-6 py-4 text-right">
                       {removingId === admin.id ? (
                         <Loader2 className="w-4 h-4 animate-spin text-gray-400 ml-auto" />
                       ) : (
                         <button
                           onClick={() => handleRemoveAdmin(admin)}
-                          className="text-red-500 hover:text-red-700 font-medium text-sm flex items-center justify-end w-full"
+                          className="p-2 rounded-lg text-red-400 hover:bg-red-50 hover:text-red-600 transition-all ml-auto block"
                         >
-                          <Trash2 className="w-4 h-4 mr-1" /> Remover
+                          <Trash2 size={16} />
                         </button>
                       )}
                     </td>
                   </tr>
-                ))
-              ) : (
-                <tr>
-                  <td colSpan="3" className="px-5 py-8 text-center text-sm text-gray-500">
-                    Nenhum administrador cadastrado.
-                  </td>
-                </tr>
-              )}
-            </tbody>
-          </table>
+                ))}
+              </tbody>
+            </table>
+          </div>
+          
+          <div className="p-5 flex items-center gap-3" style={{ backgroundColor: 'var(--bg-secondary)' }}>
+            <Info size={16} className="opacity-40" />
+            <p className="text-[11px]" style={{ color: 'var(--text-muted)' }}>
+              Administradores têm permissão para aprovar ONGs, gerenciar doações e visualizar relatórios financeiros sensíveis.
+            </p>
+          </div>
         </div>
-      </Card>
+
+      </div>
     </div>
   );
 }

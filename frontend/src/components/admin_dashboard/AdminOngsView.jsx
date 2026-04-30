@@ -1,7 +1,18 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { ArrowLeft, Check, X, Loader2 } from 'lucide-react';
-import { Card, Badge } from './SharedComponents';
+import { 
+  ArrowLeft, 
+  Check, 
+  X, 
+  Loader2, 
+  Building2, 
+  Mail, 
+  Phone, 
+  MapPin, 
+  FileText,
+  AlertCircle
+} from 'lucide-react';
 import api from '../../services/api';
+import Swal from 'sweetalert2';
 
 // Mapeia status do banco → aba do frontend
 const STATUS_TAB_MAP = {
@@ -14,12 +25,11 @@ export default function AdminOngsView({ selectedONG, setSelectedONG }) {
   const [ongStatusTab, setOngStatusTab] = useState('Pendentes');
   const [institutions, setInstitutions] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [actionLoading, setActionLoading] = useState(null); // id da ONG em ação
+  const [actionLoading, setActionLoading] = useState(null);
   const [error, setError] = useState(null);
 
   const tabs = ['Pendentes', 'Aprovadas', 'Reprovadas'];
 
-  // Busca lista completa de ONGs
   const fetchInstitutions = useCallback(() => {
     setLoading(true);
     api.get('/api/admin/institutions')
@@ -30,214 +40,216 @@ export default function AdminOngsView({ selectedONG, setSelectedONG }) {
 
   useEffect(() => { fetchInstitutions(); }, [fetchInstitutions]);
 
-  // Filtro pela aba ativa (usando o mapa de status)
   const filteredOngs = institutions.filter(
     ong => STATUS_TAB_MAP[ong.status] === ongStatusTab
   );
 
-  // Aprovação
   const handleApprove = async (ong, e) => {
     e?.stopPropagation();
-    setActionLoading(ong.id);
-    try {
-      const res = await api.post(`/api/admin/institutions/${ong.id}/approve`);
-      // O backend já devolve a lista atualizada
-      if (res.data.institutions) setInstitutions(res.data.institutions);
-      else fetchInstitutions();
-      if (selectedONG?.id === ong.id) setSelectedONG(null);
-    } catch {
-      alert('Erro ao aprovar ONG. Tente novamente.');
-    } finally {
-      setActionLoading(null);
+    const result = await Swal.fire({
+      title: 'Aprovar ONG?',
+      text: `Deseja aprovar "${ong.nome}" para receber doações?`,
+      icon: 'question',
+      showCancelButton: true,
+      confirmButtonColor: 'var(--green-primary)',
+      confirmButtonText: 'Sim, aprovar!'
+    });
+
+    if (result.isConfirmed) {
+      setActionLoading(ong.id);
+      try {
+        const res = await api.post(`/api/admin/institutions/${ong.id}/approve`);
+        if (res.data.institutions) setInstitutions(res.data.institutions);
+        else fetchInstitutions();
+        Swal.fire('Aprovada!', 'A ONG agora faz parte da rede ConectaBem.', 'success');
+        if (selectedONG?.id === ong.id) setSelectedONG(null);
+      } catch {
+        Swal.fire('Erro', 'Não foi possível aprovar a ONG.', 'error');
+      } finally {
+        setActionLoading(null);
+      }
     }
   };
 
-  // Reprovação
   const handleReject = async (ong, e) => {
     e?.stopPropagation();
-    const reason = prompt('Informe o motivo da reprovação (opcional):') ?? '';
-    setActionLoading(ong.id);
-    try {
-      const res = await api.post(`/api/admin/institutions/${ong.id}/reject`, { reason });
-      if (res.data.institutions) setInstitutions(res.data.institutions);
-      else fetchInstitutions();
-      if (selectedONG?.id === ong.id) setSelectedONG(null);
-    } catch {
-      alert('Erro ao reprovar ONG. Tente novamente.');
-    } finally {
-      setActionLoading(null);
+    const { value: reason } = await Swal.fire({
+      title: 'Reprovar ONG',
+      input: 'text',
+      inputLabel: 'Motivo da reprovação',
+      inputPlaceholder: 'Ex: Documentação incompleta',
+      showCancelButton: true,
+      confirmButtonColor: '#ef4444'
+    });
+
+    if (reason !== undefined) {
+      setActionLoading(ong.id);
+      try {
+        const res = await api.post(`/api/admin/institutions/${ong.id}/reject`, { reason });
+        if (res.data.institutions) setInstitutions(res.data.institutions);
+        else fetchInstitutions();
+        Swal.fire('Reprovada', 'A solicitação foi rejeitada.', 'info');
+        if (selectedONG?.id === ong.id) setSelectedONG(null);
+      } catch {
+        Swal.fire('Erro', 'Não foi possível processar a ação.', 'error');
+      } finally {
+        setActionLoading(null);
+      }
     }
   };
 
-  // ── Tela de Detalhe ──────────────────────────────────────────────────────
+  // ── TELA DE DETALHE ────────────────────────────────────────────────────────
   if (selectedONG) {
     const ong = institutions.find(i => i.id === selectedONG.id) ?? selectedONG;
-    const statusTab = STATUS_TAB_MAP[ong.status] ?? ong.status;
-
+    
     return (
-      <Card className="h-full min-h-[500px]">
-        <div className="flex items-center space-x-3 mb-6">
-          <button onClick={() => setSelectedONG(null)} className="p-2 hover:bg-gray-100 rounded-full transition-colors">
-            <ArrowLeft className="w-5 h-5 text-gray-600" />
-          </button>
-          <h2 className="text-xl font-bold text-gray-800">Detalhes da ONG</h2>
-        </div>
+      <div className="max-w-4xl mx-auto animate-in fade-in slide-in-from-bottom-4 duration-500">
+        <button 
+          onClick={() => setSelectedONG(null)}
+          className="flex items-center gap-2 text-[13px] font-medium mb-6 hover:opacity-70 transition-opacity"
+          style={{ color: 'var(--green-primary)' }}
+        >
+          <ArrowLeft size={16} /> Voltar para a lista
+        </button>
 
-        <div className="flex justify-between items-start mb-8">
-          <h1 className="text-2xl font-bold text-gray-900">{ong.nome}</h1>
-          <Badge type={ong.status === 'APPROVED' ? 'success' : ong.status === 'REJECTED' ? 'danger' : 'warning'}>
-            {statusTab}
-          </Badge>
-        </div>
-
-        <div className="flex space-x-6 border-b border-gray-200 mb-6">
-          <button className="pb-3 text-sm font-medium text-green-600 border-b-2 border-green-600">Informações</button>
-          <button className="pb-3 text-sm font-medium text-gray-500 hover:text-gray-700">Documentos</button>
-          <button className="pb-3 text-sm font-medium text-gray-500 hover:text-gray-700">Histórico</button>
-        </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-y-4 gap-x-8 mb-6">
-          {[
-            ['ID', `#${ong.id}`],
-            ['Nome', ong.nome],
-            ['CNPJ', ong.cnpj ?? '—'],
-            ['E-mail', ong.email],
-            ['Telefone', ong.telefone ?? '—'],
-            ['Endereço', ong.endereco ?? '—'],
-          ].map(([label, value]) => (
-            <div key={label}>
-              <p className="text-sm text-gray-500 mb-1">{label}</p>
-              <p className="text-sm font-medium text-gray-900">{value}</p>
+        <div className="card-base p-8 relative overflow-hidden">
+          {/* Header do Detalhe */}
+          <div className="flex justify-between items-start mb-8">
+            <div className="flex items-center gap-5">
+              <div className="w-16 h-16 rounded-2xl flex items-center justify-center text-2xl font-bold text-white shadow-lg"
+                   style={{ background: 'linear-gradient(135deg, var(--green-primary), var(--green-dark))' }}>
+                {ong.nome?.charAt(0)}
+              </div>
+              <div>
+                <h1 className="text-[24px] font-medium leading-tight" style={{ color: 'var(--text-primary)' }}>{ong.nome}</h1>
+                <div className="flex items-center gap-2 mt-1">
+                  <span className="text-[12px] px-2 py-0.5 rounded-full font-bold uppercase tracking-wider"
+                        style={{ 
+                          backgroundColor: ong.status === 'APPROVED' ? 'var(--green-light)' : ong.status === 'REJECTED' ? 'var(--pink-light)' : 'var(--amber-light)',
+                          color: ong.status === 'APPROVED' ? 'var(--green-text)' : ong.status === 'REJECTED' ? 'var(--coral-text)' : 'var(--amber-text)'
+                        }}>
+                    {STATUS_TAB_MAP[ong.status]}
+                  </span>
+                  <span className="text-[12px]" style={{ color: 'var(--text-muted)' }}>ID: #{ong.id}</span>
+                </div>
+              </div>
             </div>
-          ))}
+          </div>
+
+          {/* Grid de Informações */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-10">
+            <div className="space-y-6">
+              {[
+                { icon: <Building2 size={18} />, label: 'CNPJ', value: ong.cnpj },
+                { icon: <Mail size={18} />, label: 'E-mail de Contato', value: ong.email },
+                { icon: <Phone size={18} />, label: 'Telefone', value: ong.telefone || 'Não informado' },
+                { icon: <MapPin size={18} />, label: 'Endereço Sede', value: ong.endereco || 'Não informado' },
+              ].map((item, i) => (
+                <div key={i} className="flex gap-4">
+                  <div className="mt-1" style={{ color: 'var(--green-primary)' }}>{item.icon}</div>
+                  <div>
+                    <p className="text-[11px] font-bold uppercase tracking-wider mb-0.5" style={{ color: 'var(--text-muted)' }}>{item.label}</p>
+                    <p className="text-[14px] font-medium" style={{ color: 'var(--text-primary)' }}>{item.value}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            <div className="p-5 rounded-xl flex flex-col gap-3" style={{ backgroundColor: 'var(--bg-secondary)' }}>
+              <div className="flex items-center gap-2 text-[13px] font-bold" style={{ color: 'var(--text-primary)' }}>
+                <FileText size={18} style={{ color: 'var(--green-primary)' }} />
+                Descrição da Instituição
+              </div>
+              <p className="text-[13px] leading-relaxed italic" style={{ color: 'var(--text-secondary)' }}>
+                "{ong.descricaoInstituicao || 'Nenhuma descrição detalhada fornecida.'}"
+              </p>
+            </div>
+          </div>
+
+          {/* Ações de Aprovação */}
+          {ong.status === 'PENDING' && (
+            <div className="flex gap-4 pt-6 border-t" style={{ borderColor: 'var(--border)' }}>
+              <button
+                onClick={(e) => handleReject(ong, e)}
+                className="flex-1 py-3.5 rounded-xl border font-bold text-[14px] flex items-center justify-center gap-2 transition-all hover:bg-red-50"
+                style={{ borderColor: 'rgba(239, 68, 68, 0.2)', color: '#ef4444' }}
+              >
+                <X size={18} /> Reprovar Cadastro
+              </button>
+              <button
+                onClick={(e) => handleApprove(ong, e)}
+                className="flex-[2] py-3.5 rounded-xl text-white font-bold text-[14px] flex items-center justify-center gap-2 transition-all shadow-lg shadow-emerald-100"
+                style={{ backgroundColor: 'var(--green-primary)' }}
+              >
+                <Check size={18} /> Aprovar e Ativar Instituição
+              </button>
+            </div>
+          )}
         </div>
-
-        {ong.descricaoInstituicao && (
-          <div>
-            <p className="text-sm text-gray-500 mb-2">Descrição</p>
-            <p className="text-sm text-gray-800 leading-relaxed">{ong.descricaoInstituicao}</p>
-          </div>
-        )}
-
-        {ong.status === 'PENDING' && (
-          <div className="mt-10 flex gap-4">
-            <button
-              onClick={(e) => handleApprove(ong, e)}
-              disabled={actionLoading === ong.id}
-              className="flex-1 py-3 bg-green-600 text-white rounded-xl font-medium hover:bg-green-700 transition-colors flex items-center justify-center disabled:opacity-60"
-            >
-              {actionLoading === ong.id ? <Loader2 className="w-5 h-5 animate-spin" /> : <><Check className="w-5 h-5 mr-2" /> Aprovar ONG</>}
-            </button>
-            <button
-              onClick={(e) => handleReject(ong, e)}
-              disabled={actionLoading === ong.id}
-              className="flex-1 py-3 bg-red-500 text-white rounded-xl font-medium hover:bg-red-600 transition-colors flex items-center justify-center disabled:opacity-60"
-            >
-              {actionLoading === ong.id ? <Loader2 className="w-5 h-5 animate-spin" /> : <><X className="w-5 h-5 mr-2" /> Reprovar ONG</>}
-            </button>
-          </div>
-        )}
-      </Card>
+      </div>
     );
   }
 
-  // ── Tela de Lista ────────────────────────────────────────────────────────
+  // ── TELA DE LISTA ──────────────────────────────────────────────────────────
   return (
-    <Card className="h-full min-h-[500px]">
-      <h2 className="text-xl font-bold text-gray-800 mb-6">ONGs</h2>
-
-      <div className="flex space-x-6 border-b border-gray-200 mb-6">
-        {tabs.map(tab => (
-          <button
-            key={tab}
-            onClick={() => setOngStatusTab(tab)}
-            className={`pb-3 text-sm font-medium transition-colors ${
-              ongStatusTab === tab
-                ? 'text-green-600 border-b-2 border-green-600'
-                : 'text-gray-500 hover:text-gray-700'
-            }`}
-          >
-            {tab}
-          </button>
-        ))}
-      </div>
-
-      {error && <p className="text-red-500 text-sm mb-4">{error}</p>}
-
-      {loading ? (
-        <div className="space-y-4">
-          {Array(3).fill(0).map((_, i) => (
-            <div key={i} className="animate-pulse h-20 bg-gray-100 rounded-lg" />
+    <div className="animate-in fade-in duration-500">
+      <div className="flex items-center justify-between mb-8">
+        <h2 className="text-[20px] font-medium" style={{ color: 'var(--text-primary)' }}>Gestão de ONGs</h2>
+        <div className="flex gap-2 p-1 rounded-xl" style={{ backgroundColor: 'var(--bg-tertiary)' }}>
+          {tabs.map(tab => (
+            <button
+              key={tab}
+              onClick={() => setOngStatusTab(tab)}
+              className="px-4 py-2 rounded-lg text-[12px] font-medium transition-all"
+              style={{ 
+                backgroundColor: ongStatusTab === tab ? 'var(--bg-primary)' : 'transparent',
+                color: ongStatusTab === tab ? 'var(--green-primary)' : 'var(--text-secondary)',
+                boxShadow: ongStatusTab === tab ? 'var(--shadow-card)' : 'none'
+              }}
+            >
+              {tab}
+            </button>
           ))}
         </div>
+      </div>
+
+      {loading ? (
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          {[1,2,3,4].map(i => <div key={i} className="card-base h-[100px] animate-pulse" />)}
+        </div>
       ) : filteredOngs.length === 0 ? (
-        <div className="text-center py-10 text-gray-500">
-          Nenhuma ONG encontrada nesta categoria.
+        <div className="flex flex-col items-center justify-center py-20 card-base border-dashed">
+          <AlertCircle size={48} className="mb-4 opacity-20" />
+          <p className="text-[14px]" style={{ color: 'var(--text-muted)' }}>Nenhuma ONG nesta categoria.</p>
         </div>
       ) : (
-        <div className="space-y-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {filteredOngs.map((ong) => (
             <div
               key={ong.id}
-              className="flex flex-col sm:flex-row sm:items-center justify-between p-4 border border-gray-100 rounded-lg hover:shadow-md transition-shadow cursor-pointer bg-white"
               onClick={() => setSelectedONG(ong)}
+              className="card-base p-5 flex items-center justify-between hover:scale-[1.01] transition-all cursor-pointer group"
             >
-              <div className="flex items-center space-x-4 mb-4 sm:mb-0">
-                <div className="w-12 h-12 bg-gray-100 rounded-full flex items-center justify-center text-xl font-bold text-gray-500 shrink-0">
-                  {ong.nome?.[0] ?? '?'}
+              <div className="flex items-center gap-4">
+                <div className="w-12 h-12 rounded-xl flex items-center justify-center text-lg font-bold text-white transition-transform group-hover:rotate-6"
+                     style={{ backgroundColor: 'var(--green-primary)' }}>
+                  {ong.nome?.charAt(0)}
                 </div>
                 <div>
-                  <h4 className="font-semibold text-gray-900">{ong.nome}</h4>
-                  <p className="text-xs text-gray-500 mt-1">CNPJ: {ong.cnpj ?? '—'}</p>
-                  <p className="text-xs text-gray-500">{ong.email}</p>
+                  <h4 className="text-[14px] font-medium" style={{ color: 'var(--text-primary)' }}>{ong.nome}</h4>
+                  <p className="text-[11px] font-bold opacity-60 uppercase" style={{ color: 'var(--text-muted)' }}>
+                    CNPJ: {ong.cnpj || 'PENDENTE'}
+                  </p>
                 </div>
               </div>
-
-              <div className="flex items-center space-x-3 w-full sm:w-auto justify-end" onClick={e => e.stopPropagation()}>
-                {actionLoading === ong.id
-                  ? <Loader2 className="w-5 h-5 animate-spin text-gray-400" />
-                  : (
-                    <>
-                      {ong.status === 'PENDING' && (
-                        <>
-                          <button
-                            onClick={(e) => handleApprove(ong, e)}
-                            className="px-4 py-2 bg-green-50 text-green-700 border border-green-200 rounded-lg text-sm font-medium hover:bg-green-100 transition-colors"
-                          >
-                            Aprovar
-                          </button>
-                          <button
-                            onClick={(e) => handleReject(ong, e)}
-                            className="px-4 py-2 bg-white text-red-600 border border-red-200 rounded-lg text-sm font-medium hover:bg-red-50 transition-colors"
-                          >
-                            Reprovar
-                          </button>
-                        </>
-                      )}
-                      {ong.status === 'APPROVED' && (
-                        <button
-                          onClick={(e) => handleReject(ong, e)}
-                          className="px-4 py-2 bg-white text-red-600 border border-red-200 rounded-lg text-sm font-medium hover:bg-red-50 transition-colors"
-                        >
-                          Revogar Aprovação
-                        </button>
-                      )}
-                      {ong.status === 'REJECTED' && (
-                        <button
-                          onClick={(e) => handleApprove(ong, e)}
-                          className="px-4 py-2 bg-gray-50 text-gray-700 border border-gray-200 rounded-lg text-sm font-medium hover:bg-gray-100 transition-colors"
-                        >
-                          Reavaliar (Aprovar)
-                        </button>
-                      )}
-                    </>
-                  )
-                }
+              
+              <div className="p-2 rounded-full hover:bg-[var(--bg-secondary)] transition-colors">
+                <ArrowLeft size={16} className="rotate-180" style={{ color: 'var(--text-muted)' }} />
               </div>
             </div>
           ))}
         </div>
       )}
-    </Card>
+    </div>
   );
 }

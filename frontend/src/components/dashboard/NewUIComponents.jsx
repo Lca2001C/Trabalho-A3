@@ -47,11 +47,11 @@ export function StatsCard({ label, value, showLink, linkText, onClick, isRanking
 
 // ── LevelProgress ────────────────────────────────────────────────────────────
 export function LevelProgress({ points }) {
-  // Regras de nível
+  // Regras de nível (Atualizadas)
   const getLevelInfo = (pts) => {
-    if (pts < 100) return { label: 'Bronze', next: 'Prata', goal: 100 };
-    if (pts < 300) return { label: 'Prata', next: 'Ouro', goal: 300 };
-    if (pts < 600) return { label: 'Ouro', next: 'Diamante', goal: 600 };
+    if (pts < 500) return { label: 'Bronze', next: 'Prata', goal: 500 };
+    if (pts < 2000) return { label: 'Prata', next: 'Ouro', goal: 2000 };
+    if (pts < 5000) return { label: 'Ouro', next: 'Diamante', goal: 5000 };
     return { label: 'Diamante', next: 'Nível Máximo', goal: pts };
   };
 

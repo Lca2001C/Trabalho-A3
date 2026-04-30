@@ -1,6 +1,5 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
-import { Search, Loader2, ChevronLeft, ChevronRight } from 'lucide-react';
-import { Card } from './SharedComponents';
+import { Search, Loader2, ChevronDown, History, Heart, DollarSign } from 'lucide-react';
 import api from '../../services/api';
 
 const LIMIT = 20;
@@ -29,12 +28,10 @@ export default function AdminDonationsView() {
       .finally(() => setL(false));
   }, []);
 
-  // Fetch inicial e ao mudar de página sem append
   useEffect(() => {
     fetchPage(page, search, false);
   }, [page]); // eslint-disable-line
 
-  // Busca com debounce — reset página
   const handleSearch = (val) => {
     setSearch(val);
     clearTimeout(searchTimeout.current);
@@ -44,7 +41,6 @@ export default function AdminDonationsView() {
     }, 350);
   };
 
-  // "Carregar mais" — appenda próxima página
   const handleLoadMore = () => {
     const nextPage = page + 1;
     setPage(nextPage);
@@ -55,87 +51,124 @@ export default function AdminDonationsView() {
   const showing = doacoes.length;
 
   return (
-    <Card className="h-full min-h-[500px]">
-      <div className="flex justify-between items-center mb-6">
+    <div className="animate-in fade-in duration-500">
+      
+      {/* Header com Busca */}
+      <div className="flex flex-col md:flex-row md:items-center justify-between mb-8 gap-4">
         <div>
-          <h2 className="text-xl font-bold text-gray-800">Histórico de Doações</h2>
+          <h2 className="text-[20px] font-medium" style={{ color: 'var(--text-primary)' }}>Histórico de Doações</h2>
           {!loading && (
-            <p className="text-sm text-gray-500 mt-1">
-              Exibindo {showing} de {meta.total} registros
+            <p className="text-[12px] mt-1" style={{ color: 'var(--text-secondary)' }}>
+              Exibindo <span className="font-bold">{showing}</span> de {meta.total} registros na plataforma.
             </p>
           )}
         </div>
-        <div className="relative">
-          <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+
+        <div className="relative group">
+          <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 transition-colors" 
+                  style={{ color: 'var(--text-muted)' }} />
           <input
             type="text"
             value={search}
             onChange={e => handleSearch(e.target.value)}
-            placeholder="Buscar doação..."
-            className="pl-9 pr-4 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-green-500 w-64"
+            placeholder="Doador, ONG ou item..."
+            className="pl-10 pr-4 py-2.5 rounded-xl text-[13px] transition-all w-full md:w-72 border"
+            style={{ 
+              backgroundColor: 'var(--bg-primary)', 
+              borderColor: 'var(--border)',
+              color: 'var(--text-primary)'
+            }}
           />
         </div>
       </div>
 
-      <div className="overflow-x-auto">
-        <table className="w-full text-left border-collapse">
-          <thead>
-            <tr className="border-b border-gray-100">
-              {['Data', 'Doador', 'Tipo', 'Valor/Itens', 'Destinatário'].map(h => (
-                <th key={h} className="pb-3 text-sm font-medium text-gray-500">{h}</th>
-              ))}
-            </tr>
-          </thead>
-          <tbody>
-            {loading
-              ? Array(LIMIT).fill(0).map((_, i) => (
-                <tr key={i} className="border-b border-gray-50">
-                  {Array(5).fill(0).map((_, j) => (
-                    <td key={j} className="py-4">
-                      <div className="animate-pulse h-4 bg-gray-200 rounded" />
-                    </td>
-                  ))}
-                </tr>
-              ))
-              : doacoes.map(d => (
-                <tr key={d.id} className="border-b border-gray-50 hover:bg-gray-50 transition-colors">
-                  <td className="py-4 text-sm text-gray-800">{d.data}</td>
-                  <td className="py-4 text-sm text-gray-800">{d.doador}</td>
-                  <td className="py-4 text-sm text-gray-800">{d.tipo}</td>
-                  <td className="py-4 text-sm text-gray-800">{d.valorItens}</td>
-                  <td className="py-4 text-sm text-gray-800">{d.destinatario}</td>
-                </tr>
-              ))
-            }
-            {!loading && doacoes.length === 0 && (
-              <tr>
-                <td colSpan="5" className="py-8 text-center text-gray-500 text-sm">
-                  Nenhuma doação encontrada.
-                </td>
+      {/* Tabela de Doações */}
+      <div className="card-base overflow-hidden">
+        <div className="overflow-x-auto">
+          <table className="w-full text-left border-collapse">
+            <thead>
+              <tr className="border-b" style={{ borderColor: 'var(--border)' }}>
+                {['Data', 'Doador', 'Tipo', 'Valor/Itens', 'Destinatário'].map(h => (
+                  <th key={h} className="px-6 py-4 text-[11px] uppercase font-bold tracking-wider" 
+                      style={{ color: 'var(--text-muted)' }}>{h}</th>
+                ))}
               </tr>
-            )}
-          </tbody>
-        </table>
+            </thead>
+            <tbody className="divide-y" style={{ borderColor: 'var(--border)' }}>
+              {loading
+                ? Array(8).fill(0).map((_, i) => (
+                  <tr key={i}>
+                    {Array(5).fill(0).map((_, j) => (
+                      <td key={j} className="px-6 py-4">
+                        <div className="animate-pulse h-4 bg-gray-200 dark:bg-gray-700 rounded w-full" />
+                      </td>
+                    ))}
+                  </tr>
+                ))
+                : doacoes.map(d => (
+                  <tr key={d.id} className="hover:bg-[var(--bg-secondary)] transition-colors group">
+                    <td className="px-6 py-4 text-[13px]" style={{ color: 'var(--text-primary)' }}>
+                      <div className="flex items-center gap-2">
+                        <History size={14} className="opacity-40" />
+                        {d.data}
+                      </div>
+                    </td>
+                    <td className="px-6 py-4 text-[13px] font-medium" style={{ color: 'var(--text-primary)' }}>{d.doador}</td>
+                    <td className="px-6 py-4">
+                      <span className="text-[11px] px-2 py-0.5 rounded-full font-bold uppercase"
+                            style={{ 
+                              backgroundColor: d.tipo === 'financeira' ? 'var(--green-light)' : 'var(--bg-tertiary)',
+                              color: d.tipo === 'financeira' ? 'var(--green-text)' : 'var(--text-secondary)'
+                            }}>
+                        {d.tipo}
+                      </span>
+                    </td>
+                    <td className="px-6 py-4 text-[13px] font-medium" style={{ color: 'var(--text-primary)' }}>
+                      <div className="flex items-center gap-1.5">
+                        {d.tipo === 'financeira' ? <DollarSign size={14} className="text-emerald-500" /> : <Heart size={14} className="text-pink-500" />}
+                        {d.valorItens}
+                      </div>
+                    </td>
+                    <td className="px-6 py-4 text-[13px]" style={{ color: 'var(--text-secondary)' }}>{d.destinatario}</td>
+                  </tr>
+                ))
+              }
+              {!loading && doacoes.length === 0 && (
+                <tr>
+                  <td colSpan="5" className="py-20 text-center">
+                    <div className="text-4xl mb-3 opacity-20">📂</div>
+                    <p className="text-[14px]" style={{ color: 'var(--text-muted)' }}>Nenhuma doação encontrada.</p>
+                  </td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+        </div>
       </div>
 
-      {/* Botão "Carregar mais" com paginação real */}
+      {/* Paginação */}
       {!loading && hasMore && (
-        <div className="mt-6 flex flex-col items-center gap-2">
+        <div className="mt-8 flex flex-col items-center">
           <button
             onClick={handleLoadMore}
             disabled={loadingMore}
-            className="text-green-600 text-sm font-medium hover:underline px-4 py-2 rounded-lg hover:bg-green-50 transition-colors disabled:opacity-60 flex items-center gap-2"
+            className="group flex items-center gap-2 px-6 py-3 rounded-xl text-[13px] font-bold transition-all border shadow-sm hover:scale-[1.02] active:scale-[0.98]"
+            style={{ 
+              backgroundColor: 'var(--bg-primary)', 
+              borderColor: 'var(--border)',
+              color: 'var(--text-primary)'
+            }}
           >
             {loadingMore
-              ? <><Loader2 className="w-4 h-4 animate-spin" /> Carregando...</>
-              : `Carregar mais (${meta.total - showing} restantes)`
+              ? <Loader2 className="w-4 h-4 animate-spin" />
+              : <><ChevronDown className="w-4 h-4 group-hover:translate-y-0.5 transition-transform" /> Carregar mais registros</>
             }
           </button>
-          <p className="text-xs text-gray-400">
+          <p className="text-[11px] mt-4 uppercase font-bold tracking-widest opacity-40" style={{ color: 'var(--text-muted)' }}>
             Página {page} de {meta.totalPages}
           </p>
         </div>
       )}
-    </Card>
+    </div>
   );
 }

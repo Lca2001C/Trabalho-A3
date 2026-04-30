@@ -11,25 +11,47 @@
 
 const prisma = require('../lib/prisma');
 
-// ─── Regras de Pontuação ────────────────────────────────────────────────────
-// Lógica de cálculo de pontos por tipo de doação:
-//   • Item físico  → 50 pontos fixos
-//   • Financeira   → 1 ponto para cada R$ 1,00 doado (arredondado para baixo)
-// Futuramente pode ser extraído para um service dedicado (pointsService.js).
-const PONTOS_ITEM_FIXO = 50;
+// ─── Regras de Pontuação (Atualizadas) ──────────────────────────────────────
+//   • Base: 2 pontos por R$ 1,00 doado (arredondar para baixo)
+//   • Primeira doação: multiplicar por 3
+//   • Doação recorrente ativa: multiplicar por 2.5 (Simulado por flag no user)
+//   • Campanha especial: multiplicar por 4 (Simulado por flag no user ou params)
+//   • Item físico: 15 pontos fixos por item
+const PONTOS_ITEM_FIXO = 15;
 
 /**
- * Calcula os pontos gerados com base no tipo e valor da doação.
- * @param {string} tipo - "item" ou "financeira"
- * @param {number|null} valor - Valor em R$ (usado apenas para doações financeiras)
- * @returns {number} Quantidade de pontos a creditar
+ * Calcula os pontos gerados com base no tipo, valor e histórico do doador.
  */
-function calcularPontos(tipo, valor) {
+async function calcularPontos(userId, tipo, valor, isCampaign = false) {
   if (tipo === 'item') {
     return PONTOS_ITEM_FIXO;
   }
-  // Financeira: 1 ponto por R$ 1 doado (ex: R$ 75,90 → 75 pontos)
-  return Math.floor(valor);
+
+  // Base: 2 pontos por real
+  let pontos = Math.floor((valor || 0) * 2);
+
+  // Busca dados do usuário para verificar multiplicadores
+  const user = await prisma.user.findUnique({
+    where: { id: userId },
+    include: { _count: { select: { donations: true } } }
+  });
+
+  let multiplicador = 1;
+
+  // 1. Primeira doação (multiplica por 3)
+  if (user._count.donations === 0) {
+    multiplicador = 3;
+  } 
+  // 2. Campanha Especial (multiplica por 4)
+  else if (isCampaign || user.campanhaAtiva) {
+    multiplicador = 4;
+  }
+  // 3. Doação Recorrente (multiplica por 2.5)
+  else if (user.recorrenteAtiva) {
+    multiplicador = 2.5;
+  }
+
+  return Math.floor(pontos * multiplicador);
 }
 
 // ─── Criar Doação ───────────────────────────────────────────────────────────
@@ -99,7 +121,7 @@ async function createDonation(req, res) {
     }
 
     // ── Calcula os pontos a serem creditados ──
-    const pontosGerados = calcularPontos(tipo, valor);
+    const pontosGerados = await calcularPontos(userId, tipo, valor, req.body.isCampaign);
 
     // ── Transação atômica: cria doação + credita pontos ──
     // Se qualquer operação falhar, ambas são revertidas automaticamente.
