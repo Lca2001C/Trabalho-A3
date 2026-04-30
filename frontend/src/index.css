@@ -1,3 +1,88 @@
+@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&display=swap');
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+:root {
+  --bg-primary: #ffffff;
+  --bg-secondary: #f5f7f5;
+  --bg-tertiary: #eef2ee;
+  --bg-sidebar: #ffffff;
+  --text-primary: #111111;
+  --text-secondary: #555555;
+  --text-muted: #888888;
+  --border: rgba(0,0,0,0.08);
+  --border-strong: rgba(0,0,0,0.15);
+  --green-primary: #1D9E75;
+  --green-light: #E1F5EE;
+  --green-dark: #0F6E56;
+  --green-text: #085041;
+  --amber-light: #FAEEDA;
+  --amber-text: #633806;
+  --pink-light: #FBEAF0;
+  --coral-text: #D85A30;
+  --shadow-card: 0 1px 3px rgba(0,0,0,0.06);
+
+  transition: background 300ms ease, color 300ms ease;
+}
+
+[data-theme="dark"] {
+  --bg-primary: #1a1a1a;
+  --bg-secondary: #242424;
+  --bg-tertiary: #111111;
+  --bg-sidebar: #161616;
+  --text-primary: #f0f0f0;
+  --text-secondary: #aaaaaa;
+  --text-muted: #666666;
+  --border: rgba(255,255,255,0.08);
+  --border-strong: rgba(255,255,255,0.15);
+  --green-primary: #1D9E75;
+  --green-light: #0a2e22;
+  --green-dark: #5DCAA5;
+  --green-text: #9FE1CB;
+  --amber-light: #2e1f00;
+  --amber-text: #FAC775;
+  --pink-light: #2e0d18;
+  --coral-text: #F0997B;
+  --shadow-card: 0 1px 4px rgba(0,0,0,0.4);
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  font-family: 'Outfit', sans-serif;
+  transition: background 200ms ease, color 200ms ease, border-color 200ms ease;
+}
+
+body {
+  background-color: var(--bg-secondary);
+  color: var(--text-primary);
+  min-height: 100vh;
+}
+
+/* Utilitários Customizados */
+.card-base {
+  background-color: var(--bg-primary);
+  border: 0.5px solid var(--border);
+  border-radius: 12px;
+  box-shadow: var(--shadow-card);
+}
+
+.text-muted { color: var(--text-muted); }
+.text-secondary { color: var(--text-secondary); }
+
+/* Scrollbar Custom */
+::-webkit-scrollbar {
+  width: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--bg-tertiary);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--text-muted);
+  border-radius: 10px;
+}

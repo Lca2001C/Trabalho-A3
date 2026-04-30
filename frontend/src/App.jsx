@@ -15,6 +15,7 @@
 
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
+import { ThemeProvider } from './contexts/ThemeContext';
 
 // Componentes de rota
 import PrivateRoute from './components/PrivateRoute';
@@ -61,40 +62,42 @@ function RoleRoute({ children, allowedRole }) {
 export default function App() {
   return (
     <BrowserRouter>
-      <AuthProvider>
-        <Routes>
-          {/* Rotas públicas (login/cadastro) */}
-          <Route path="/" element={
-            <RotaPublica><Home /></RotaPublica>
-          } />
-          <Route path="/login" element={
-            <RotaPublica><Login /></RotaPublica>
-          } />
-          <Route path="/cadastro" element={
-            <RotaPublica><Cadastro /></RotaPublica>
-          } />
-          <Route path="/forgot-password" element={
-            <RotaPublica><ForgotPassword /></RotaPublica>
-          } />
-          <Route path="/reset-password" element={
-            <RotaPublica><ResetPassword /></RotaPublica>
-          } />
+      <ThemeProvider>
+        <AuthProvider>
+          <Routes>
+            {/* ... rotas ... */}
+            <Route path="/" element={
+              <RotaPublica><Home /></RotaPublica>
+            } />
+            <Route path="/login" element={
+              <RotaPublica><Login /></RotaPublica>
+            } />
+            <Route path="/cadastro" element={
+              <RotaPublica><Cadastro /></RotaPublica>
+            } />
+            <Route path="/forgot-password" element={
+              <RotaPublica><ForgotPassword /></RotaPublica>
+            } />
+            <Route path="/reset-password" element={
+              <RotaPublica><ResetPassword /></RotaPublica>
+            } />
 
-          {/* Rotas protegidas por role — cada painel exige a role correta */}
-          <Route path="/admin/dashboard" element={<RoleRoute allowedRole="ADMIN"><AdminDashboard /></RoleRoute>} />
-          <Route path="/ong/dashboard" element={<RoleRoute allowedRole="INSTITUTION"><InstitutionDashboard /></RoleRoute>} />
+            {/* Rotas protegidas por role — cada painel exige a role correta */}
+            <Route path="/admin/dashboard" element={<RoleRoute allowedRole="ADMIN"><AdminDashboard /></RoleRoute>} />
+            <Route path="/ong/dashboard" element={<RoleRoute allowedRole="INSTITUTION"><InstitutionDashboard /></RoleRoute>} />
 
-          {/* Rotas protegidas do doador — envolvidas pelo PrivateRoute */}
-          <Route element={<PrivateRoute />}>
-            <Route path="/dashboard" element={<Dashboard />} />
-            <Route path="/nova-doacao" element={<NovaDoacao />} />
-            <Route path="/marketplace" element={<Marketplace />} />
-          </Route>
+            {/* Rotas protegidas do doador — envolvidas pelo PrivateRoute */}
+            <Route element={<PrivateRoute />}>
+              <Route path="/dashboard" element={<Dashboard />} />
+              <Route path="/nova-doacao" element={<NovaDoacao />} />
+              <Route path="/marketplace" element={<Marketplace />} />
+            </Route>
 
-          {/* Rota padrão — redireciona para login */}
-          <Route path="*" element={<Navigate to="/login" replace />} />
-        </Routes>
-      </AuthProvider>
+            {/* Rota padrão — redireciona para login */}
+            <Route path="*" element={<Navigate to="/login" replace />} />
+          </Routes>
+        </AuthProvider>
+      </ThemeProvider>
     </BrowserRouter>
   );
 }

@@ -112,8 +112,11 @@ O Docker é a maneira mais rápida de rodar o projeto completo, incluindo o banc
 1. **Subir os containers:**
    Na raiz do projeto, execute:
    ```bash
-   docker-compose up --build
-   ```
+# Na raiz do projeto
+docker-compose up --build
+```
+
+> 💡 **Dica:** Para uma lista completa de comandos úteis (logs, reset de banco, etc), veja o nosso [Guia de Comandos Docker](./DOCKER_GUIDE.md).
 
 2. **Preparar o Banco de Dados (Necessário na primeira execução):**
    Com os containers rodando, abra um novo terminal e execute os comandos abaixo para criar as tabelas e o usuário administrador:
