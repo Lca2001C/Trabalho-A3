@@ -14,8 +14,8 @@ const jwt = require('jsonwebtoken');
 // Número de rounds do bcrypt — 12 oferece bom equilíbrio entre segurança e performance
 const BCRYPT_SALT_ROUNDS = 12;
 
-// Tempo de expiração do token JWT (7 dias)
-const JWT_EXPIRATION = '7d';
+// Tempo de expiração do token JWT (2 horas)
+const JWT_EXPIRATION = '2h';
 
 // ─── Registro ───────────────────────────────────────────────────────────────
 
@@ -50,14 +50,8 @@ async function register(req, res) {
     }
 
     // ── Validação de tipo de usuário ──
-    const rolesPermitidas = ['USER', 'INSTITUTION', 'ADMIN'];
-    const roleUsuario = role || 'USER';
-
-    if (!rolesPermitidas.includes(roleUsuario)) {
-      return res.status(400).json({
-        erro: `Role inválida. Use: ${rolesPermitidas.join(', ')}`,
-      });
-    }
+    // Segurança: Nunca permitir o registro de ADMIN via rota pública.
+    const roleUsuario = (role === 'INSTITUTION') ? 'INSTITUTION' : 'USER';
 
     // ── Verifica se o email já está em uso ──
     const emailExistente = await prisma.user.findUnique({

@@ -1,0 +1,45 @@
+services:
+  # Banco de Dados PostgreSQL
+  db:
+    image: postgres:15-alpine
+    container_name: conectabem-db
+    restart: always
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: conectabem
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+  # Backend (Node.js + Prisma)
+  backend:
+    build: ./backend
+    container_name: conectabem-backend
+    restart: always
+    ports:
+      - "3001:3001"
+    environment:
+      - DATABASE_URL=postgresql://postgres:password@db:5432/conectabem?schema=public
+      - DIRECT_URL=postgresql://postgres:password@db:5432/conectabem?schema=public
+      - JWT_SECRET=sua_chave_secreta_aqui_bem_forte
+      - PORT=3001
+      - FRONTEND_URL=http://localhost:5173
+    depends_on:
+      - db
+
+  # Frontend (React + Vite)
+  frontend:
+    build: ./frontend
+    container_name: conectabem-frontend
+    restart: always
+    ports:
+      - "5173:5173"
+    environment:
+      - VITE_API_URL=http://localhost:3001
+    depends_on:
+      - backend
+
+volumes:
+  postgres_data:

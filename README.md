@@ -105,7 +105,39 @@ A arquitetura do projeto separa claramente as responsabilidades entre Front e Ba
 
 ---
 
-## 🛠️ Como Executar o Projeto Localmente
+### 🐳 Executando com Docker (Recomendado)
+
+O Docker é a maneira mais rápida de rodar o projeto completo, incluindo o banco de dados.
+
+1. **Subir os containers:**
+   Na raiz do projeto, execute:
+   ```bash
+   docker-compose up --build
+   ```
+
+2. **Preparar o Banco de Dados (Necessário na primeira execução):**
+   Com os containers rodando, abra um novo terminal e execute os comandos abaixo para criar as tabelas e o usuário administrador:
+   ```bash
+   # Criar tabelas
+   docker exec -it conectabem-backend npx prisma db push
+
+   # Criar usuário Administrador Master
+   docker exec -it conectabem-backend node prisma/seedAdmin.js
+   ```
+
+3. **Acessar a aplicação:**
+   - **Frontend:** [http://localhost:5173](http://localhost:5173)
+   - **Backend (API):** [http://localhost:3001](http://localhost:3001)
+
+4. **Credenciais de Administrador:**
+   - **E-mail:** `admin@conectabem.com`
+   - **Senha:** `admin123`
+
+> **Nota:** Certifique-se de que as portas 3001 e 5173 não estão sendo usadas por outros processos no seu computador antes de iniciar o Docker.
+
+---
+
+### 🛠️ Como Executar Manualmente (Sem Docker)
 
 ### Pré-requisitos
 *   [Node.js](https://nodejs.org/en/) (v18 ou superior)

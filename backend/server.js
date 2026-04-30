@@ -10,6 +10,8 @@
 
 const express = require('express');
 const cors = require('cors');
+const helmet = require('helmet');
+const rateLimit = require('express-rate-limit');
 require('dotenv').config();
 
 const app = express();
@@ -24,6 +26,19 @@ app.use(cors({
   ].filter(Boolean),                   // Remove valores undefined/null
   credentials: true,                   // Permite envio de cookies/headers de auth
 }));
+
+// Helmet — Proteção de headers HTTP contra ataques comuns (XSS, Clickjacking, etc)
+app.use(helmet());
+
+// Rate Limiting — Limita requisições para evitar Brute Force e DoS
+const limiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutos
+  max: 100, // Limite de 100 requisições por IP por janela
+  message: { erro: 'Muitas requisições vindas deste IP. Tente novamente em 15 minutos.' }
+});
+
+// Aplica o limite globalmente (pode ser ajustado para ser mais rígido em rotas de auth)
+app.use('/api/', limiter);
 
 // Parse de JSON no body das requisições (limite de 10 MB para uploads base64)
 app.use(express.json({ limit: '10mb' }));
