@@ -20,6 +20,36 @@ const prisma = require('../lib/prisma');
 const PONTOS_ITEM_FIXO = 15;
 
 /**
+ * Retorna os multiplicadores e regras de pontuação atuais do doador.
+ */
+async function getMultiplier(req, res) {
+  try {
+    const user = await prisma.user.findUnique({
+      where: { id: req.user.id },
+      include: { _count: { select: { donations: true } } }
+    });
+
+    let multiplicador = 1;
+    let motivo = 'Base';
+
+    if (user._count.donations === 0) {
+      multiplicador = 3;
+      motivo = 'Primeira doação (3x pontos)';
+    }
+
+    return res.json({
+      multiplicador,
+      motivo,
+      basePointsPerReal: 2,
+      pointsPerItem: PONTOS_ITEM_FIXO
+    });
+  } catch (error) {
+    console.error('❌ Erro ao buscar multiplicador:', error);
+    return res.status(500).json({ erro: 'Erro interno.' });
+  }
+}
+
+/**
  * Calcula os pontos gerados com base no tipo, valor e histórico do doador.
  */
 async function calcularPontos(userId, tipo, valor, isCampaign = false) {
@@ -524,4 +554,5 @@ module.exports = {
   confirmDonationReceipt,
   getDonationById,
   updateDonationStatus,
+  getMultiplier,
 };

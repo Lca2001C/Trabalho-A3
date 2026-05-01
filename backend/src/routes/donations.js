@@ -24,6 +24,7 @@ router.use(authMiddleware);
 // CRUD de doações
 router.post('/', donationController.createDonation);
 router.get('/', donationController.getUserDonations);
+router.get('/multiplier', donationController.getMultiplier);
 
 // Instituição
 router.get('/institution/received', donationController.getInstitutionDonations);

@@ -19,6 +19,7 @@ export default function NovaDoacao() {
   const [valor, setValor] = useState('');
   const [institutionId, setInstitutionId] = useState('');
   const [institutions, setInstitutions] = useState([]);
+  const [multiplierData, setMultiplierData] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
 
@@ -31,7 +32,16 @@ export default function NovaDoacao() {
         console.error('Erro ao buscar instituições', err);
       }
     };
+    const fetchMultiplier = async () => {
+      try {
+        const response = await api.get('/api/donations/multiplier');
+        setMultiplierData(response.data);
+      } catch (err) {
+        console.error('Erro ao buscar multiplicador', err);
+      }
+    };
     fetchInstitutions();
+    fetchMultiplier();
   }, []);
 
   const handleSubmit = async (e) => {
@@ -260,6 +270,30 @@ export default function NovaDoacao() {
               )}
 
             </div>
+
+            {/* ── Banner de Pontuação ── */}
+            {multiplierData && (
+              <div className="mt-8 p-5 bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-100 rounded-2xl flex items-center gap-4">
+                <div className="w-12 h-12 rounded-full bg-blue-100 flex items-center justify-center flex-shrink-0 text-blue-600 font-bold text-lg shadow-sm">
+                  {multiplierData.multiplicador}x
+                </div>
+                <div>
+                  <h4 className="text-sm font-bold text-blue-900 mb-1">
+                    Multiplicador Ativo!
+                  </h4>
+                  <p className="text-sm text-blue-800 leading-snug">
+                    {tipoDoacao === 'item' 
+                      ? `Sua doação de item vai render ${multiplierData.pointsPerItem * multiplierData.multiplicador} pontos no ConectaBem!` 
+                      : `Com o valor atual, você receberá ${Math.floor((parseFloat(valor) || 0) * multiplierData.basePointsPerReal) * multiplierData.multiplicador} pontos no ConectaBem!`}
+                    {multiplierData.multiplicador > 1 && (
+                      <span className="block mt-1 text-xs font-semibold opacity-80">
+                        Motivo: {multiplierData.motivo}
+                      </span>
+                    )}
+                  </p>
+                </div>
+              </div>
+            )}
 
             {/* ── Botão Confirmar Doação ── */}
             <div className="mt-8 pt-6 border-t border-gray-100">

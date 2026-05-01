@@ -46,8 +46,8 @@ export function StatsCard({ label, value, showLink, linkText, onClick, isRanking
       </div>
 
       {isPoints && (
-        <div className="absolute right-[-10px] top-1/2 -translate-y-1/2 w-[40px] h-[40px] rounded-full flex items-center justify-center opacity-40 pointer-events-none"
-             style={{ backgroundColor: 'var(--green-light)', transform: 'translateY(-50%) scale(1.5)' }}>
+        <div className="absolute right-5 top-1/2 -translate-y-1/2 w-[48px] h-[48px] rounded-full flex items-center justify-center pointer-events-none"
+             style={{ backgroundColor: 'var(--green-light)', color: 'var(--green-primary)' }}>
           {icon}
         </div>
       )}
