@@ -10,6 +10,17 @@
 
 ---
 
+## 📚 Documentação Adicional
+
+Para informações detalhadas sobre cada parte do sistema, consulte os guias abaixo:
+
+- [📖 **Documentação da API**](./API_DOCS.md) — Endpoints, requisições e respostas.
+- [🗄️ **Modelo de Dados**](./DATABASE_SCHEMA.md) — Diagramas e descrição das tabelas.
+- [🚀 **Guia de Produção**](./PRODUCTION_GUIDE.md) — Como fazer o deploy profissional.
+- [🐳 **Guia Docker**](./DOCKER_GUIDE.md) — Comandos úteis para containers.
+
+---
+
 ## 🚀 Visão Geral
 
 O **ConectaBem** revoluciona o ecossistema de doações ao introduzir a **gamificação** no terceiro setor. 
