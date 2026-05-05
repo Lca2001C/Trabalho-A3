@@ -31,7 +31,6 @@ export default function OngItemsView() {
   useEffect(() => {
     api.get('/api/donations/institution/received')
       .then(res => {
-        // Filtra só doações de item físico e transforma para o formato da UI
         const itemDonations = res.data.doacoes
           .filter(d => d.tipo === 'item')
           .map(d => ({
@@ -52,67 +51,72 @@ export default function OngItemsView() {
 
   return (
     <div className="space-y-6 animate-in fade-in duration-300">
-      <div className="flex justify-between items-center mb-6">
-        <h2 className="text-xl font-bold text-gray-800 flex items-center gap-2">
-          <Package className="w-5 h-5 text-gray-500" /> Itens Recebidos
-        </h2>
+      <div className="flex justify-between items-end mb-2">
+        <div>
+          <h2 className="text-[24px] font-bold" style={{ color: 'var(--text-primary)' }}>Itens Recebidos 🧥</h2>
+          <p className="text-[14px] font-medium" style={{ color: 'var(--text-secondary)' }}>Controle de doações físicas entregues à sua ONG</p>
+        </div>
       </div>
 
-      <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
+      <div className="card-base p-0 overflow-hidden">
         {/* Filtros de categoria */}
-        <div className="flex border-b border-gray-200 mb-6 overflow-x-auto">
+        <div className="flex p-2 bg-[var(--bg-tertiary)] rounded-t-xl overflow-x-auto gap-1" style={{ borderBottom: '1px solid var(--border)' }}>
           {categories.map(tab => (
             <button
               key={tab}
               onClick={() => setFilter(tab)}
-              className={`pb-3 px-4 text-sm font-medium whitespace-nowrap transition-colors ${
+              className={`px-5 py-2.5 text-[13px] font-bold rounded-lg transition-all whitespace-nowrap ${
                 filter === tab
-                  ? 'border-b-2 border-green-500 text-green-600'
-                  : 'text-gray-500 hover:text-gray-700'
+                  ? 'bg-[var(--bg-primary)] shadow-sm'
+                  : 'opacity-50 hover:opacity-100'
               }`}
+              style={{ color: filter === tab ? 'var(--green-primary)' : 'var(--text-secondary)' }}
             >
               {tab}
             </button>
           ))}
         </div>
 
-        {loading ? (
-          <div className="space-y-4">
-            {Array(4).fill(0).map((_, i) => (
-              <div key={i} className="animate-pulse h-16 bg-gray-100 rounded-xl" />
-            ))}
-          </div>
-        ) : filtered.length > 0 ? (
-          <div className="space-y-4">
-            {filtered.map(item => (
-              <div key={item.id} className="flex items-center justify-between p-4 bg-gray-50 rounded-xl border border-gray-100">
-                <div className="flex items-center gap-4">
-                  <div className="w-12 h-12 bg-gray-200 rounded-lg flex items-center justify-center text-2xl shadow-inner">
-                    {CATEGORY_ICONS[item.category] ?? '📦'}
+        <div className="p-6">
+          {loading ? (
+            <div className="space-y-4">
+              {Array(4).fill(0).map((_, i) => (
+                <div key={i} className="animate-pulse h-16 bg-[var(--bg-tertiary)] rounded-2xl" />
+              ))}
+            </div>
+          ) : filtered.length > 0 ? (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {filtered.map(item => (
+                <div key={item.id} className="flex items-center justify-between p-4 bg-[var(--bg-secondary)] rounded-2xl border transition-all hover:shadow-md" style={{ borderColor: 'var(--border)' }}>
+                  <div className="flex items-center gap-4">
+                    <div className="w-12 h-12 bg-[var(--bg-primary)] rounded-xl flex items-center justify-center text-[22px] shadow-sm border border-[var(--border)]">
+                      {CATEGORY_ICONS[item.category] ?? '📦'}
+                    </div>
+                    <div>
+                      <h4 className="text-[15px] font-bold" style={{ color: 'var(--text-primary)' }}>{item.name}</h4>
+                      <p className="text-[12px] font-medium" style={{ color: 'var(--text-secondary)' }}>Por: {item.donor}</p>
+                    </div>
                   </div>
-                  <div>
-                    <h4 className="font-medium text-gray-800">{item.name}</h4>
-                    <p className="text-xs text-gray-500">Doado por: {item.donor}</p>
+                  <div className="flex flex-col items-end gap-1.5">
+                    <span className="text-[11px] font-bold uppercase tracking-widest" style={{ color: 'var(--text-muted)' }}>{item.date}</span>
+                    <div className="flex items-center gap-2">
+                      <div className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: item.status === 'Recebido' ? 'var(--green-primary)' : 'var(--amber-text)' }} />
+                      <span className="text-[12px] font-bold" style={{ color: item.status === 'Recebido' ? 'var(--green-text)' : 'var(--amber-text)' }}>
+                        {item.status}
+                      </span>
+                    </div>
                   </div>
                 </div>
-                <div className="flex items-center gap-6">
-                  <span className="text-sm text-gray-500">{item.date}</span>
-                  <span className={`px-3 py-1 text-xs font-medium rounded-full ${
-                    item.status === 'Recebido'
-                      ? 'bg-green-100 text-green-700'
-                      : 'bg-amber-100 text-amber-700'
-                  }`}>
-                    {item.status}
-                  </span>
-                </div>
-              </div>
-            ))}
-          </div>
-        ) : (
-          <div className="py-8 text-center text-gray-500 text-sm">
-            Nenhum item {filter !== 'Todos' ? `de "${filter}"` : ''} encontrado.
-          </div>
-        )}
+              ))}
+            </div>
+          ) : (
+            <div className="py-12 text-center">
+              <p className="text-[14px] font-medium" style={{ color: 'var(--text-muted)' }}>
+                Nenhum item {filter !== 'Todos' ? `de "${filter}"` : ''} encontrado.
+              </p>
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );

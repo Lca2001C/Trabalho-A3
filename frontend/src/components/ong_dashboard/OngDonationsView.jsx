@@ -25,15 +25,12 @@ export default function OngDonationsView() {
       await api.post(`/api/donations/${id}/confirm`);
       fetchDonations();
     } catch (err) {
-      alert('Erro ao confirmar recebimento');
+      console.error('Erro ao confirmar recebimento');
     }
   };
 
   const filteredDonations = donationsList.filter(donation => {
-    // Esconder saques (valores negativos)
     if (donation.tipo === 'financeira' && (donation.valor || 0) < 0) return false;
-
-    // Filtros de busca e abas
     const matchesFilter = donationFilter === 'Todos' || donation.tipo === donationFilter.toLowerCase();
     const donorName = donation.user?.nome || 'Anônimo';
     const matchesSearch = donorName.toLowerCase().includes(donationSearch.toLowerCase());
@@ -46,76 +43,58 @@ export default function OngDonationsView() {
 
   const formatCurrency = (value) => new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(value);
 
-  const getMethodIcon = (method) => {
-    switch(method) {
-      case 'PIX': return <QrCode className="w-5 h-5 text-teal-600" />;
-      case 'Cartão de Crédito': return <CreditCard className="w-5 h-5 text-blue-600" />;
-      case 'Boleto': return <Receipt className="w-5 h-5 text-orange-600" />;
-      default: return <CircleDollarSign className="w-5 h-5 text-gray-600" />;
-    }
-  };
-
   return (
     <div className="space-y-6 animate-in fade-in duration-300">
-      <div className="flex justify-between items-center mb-6">
+      <div className="flex justify-between items-end mb-2">
         <div>
-          <h2 className="text-xl font-bold text-gray-800 flex items-center gap-2">
-            <HeartHandshake className="w-5 h-5 text-green-600" /> Doações Recebidas
-          </h2>
+          <h2 className="text-[24px] font-bold" style={{ color: 'var(--text-primary)' }}>Doações Recebidas ❤️</h2>
+          <p className="text-[14px] font-medium" style={{ color: 'var(--text-secondary)' }}>Acompanhe o impacto da generosidade dos seus doadores</p>
         </div>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <div className="bg-green-600 text-white p-5 rounded-2xl shadow-sm">
-          <p className="text-sm text-green-100 mb-1">Total Filtrado (Financeiro)</p>
-          <h3 className="text-2xl font-bold">{loading ? '...' : formatCurrency(totalAmount)}</h3>
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div className="card-base p-6 flex flex-col gap-1" style={{ backgroundColor: 'var(--green-light)', borderColor: 'var(--green-primary)', borderWidth: '1px' }}>
+          <p className="text-[12px] font-bold uppercase tracking-wider" style={{ color: 'var(--green-dark)' }}>Total Financeiro (Filtrado)</p>
+          <h3 className="text-[28px] font-bold" style={{ color: 'var(--green-text)' }}>{loading ? '...' : formatCurrency(totalAmount)}</h3>
         </div>
-        <div className="bg-white p-5 rounded-2xl border border-gray-100 shadow-sm flex items-center gap-4">
-          <div className="w-12 h-12 bg-teal-50 rounded-full flex items-center justify-center">
-            <CircleDollarSign className="w-6 h-6 text-teal-600" />
-          </div>
-          <div>
-            <p className="text-sm text-gray-500">Financeiras</p>
-            <h3 className="text-lg font-bold text-gray-800">{loading ? '...' : pixCount} doações</h3>
-          </div>
+        <div className="card-base p-6 flex flex-col gap-1">
+          <p className="text-[12px] font-bold uppercase tracking-wider" style={{ color: 'var(--text-secondary)' }}>Doações Financeiras</p>
+          <h3 className="text-[28px] font-bold" style={{ color: 'var(--text-primary)' }}>{loading ? '...' : pixCount}</h3>
         </div>
-        <div className="bg-white p-5 rounded-2xl border border-gray-100 shadow-sm flex items-center gap-4">
-          <div className="w-12 h-12 bg-blue-50 rounded-full flex items-center justify-center">
-            <Receipt className="w-6 h-6 text-blue-600" />
-          </div>
-          <div>
-            <p className="text-sm text-gray-500">Itens / Diversos</p>
-            <h3 className="text-lg font-bold text-gray-800">{loading ? '...' : itemCount} doações</h3>
-          </div>
+        <div className="card-base p-6 flex flex-col gap-1">
+          <p className="text-[12px] font-bold uppercase tracking-wider" style={{ color: 'var(--text-secondary)' }}>Itens / Diversos</p>
+          <h3 className="text-[28px] font-bold" style={{ color: 'var(--text-primary)' }}>{loading ? '...' : itemCount}</h3>
         </div>
       </div>
 
-      <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
-        <div className="flex flex-col md:flex-row justify-between items-center gap-4 mb-6">
-          <div className="flex bg-gray-50 p-1 rounded-xl w-full md:w-auto">
+      <div className="card-base overflow-hidden">
+        <div className="p-6 flex flex-col md:flex-row justify-between items-center gap-4 border-b" style={{ borderColor: 'var(--border)' }}>
+          <div className="flex bg-[var(--bg-tertiary)] p-1 rounded-xl w-full md:w-auto">
             {['Todos', 'Financeira', 'Item'].map((tab) => (
               <button 
                 key={tab} 
                 onClick={() => setDonationFilter(tab)}
-                className={`px-4 py-2 text-sm font-medium rounded-lg transition-colors flex-1 md:flex-none ${
+                className={`px-6 py-2 text-[13px] font-bold rounded-lg transition-all flex-1 md:flex-none ${
                   donationFilter === tab 
-                    ? 'bg-white text-green-700 shadow-sm' 
-                    : 'text-gray-500 hover:text-gray-700'
+                    ? 'bg-[var(--bg-primary)] shadow-sm' 
+                    : 'opacity-50 hover:opacity-100'
                 }`}
+                style={{ color: donationFilter === tab ? 'var(--green-primary)' : 'var(--text-secondary)' }}
               >
                 {tab}
               </button>
             ))}
           </div>
 
-          <div className="relative w-full md:w-64">
-            <Search className="w-4 h-4 text-gray-400 absolute left-3 top-1/2 -translate-y-1/2" />
+          <div className="relative w-full md:w-80">
+            <Search className="w-4 h-4 absolute left-4 top-1/2 -translate-y-1/2" style={{ color: 'var(--text-muted)' }} />
             <input 
               type="text" 
               placeholder="Buscar doador..." 
               value={donationSearch}
               onChange={(e) => setDonationSearch(e.target.value)}
-              className="w-full pl-9 pr-4 py-2 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-green-500/20 focus:border-green-500 transition-all"
+              className="w-full h-[44px] pl-11 pr-4 rounded-xl text-[14px] font-medium outline-none border transition-all focus:ring-2 focus:ring-green-500"
+              style={{ backgroundColor: 'var(--bg-tertiary)', borderColor: 'var(--border)', color: 'var(--text-primary)' }}
             />
           </div>
         </div>
@@ -123,46 +102,56 @@ export default function OngDonationsView() {
         <div className="overflow-x-auto">
           <table className="w-full text-left border-collapse">
             <thead>
-              <tr className="border-b border-gray-100">
-                <th className="py-3 px-4 text-xs font-semibold text-gray-500 uppercase tracking-wider">Doador</th>
-                <th className="py-3 px-4 text-xs font-semibold text-gray-500 uppercase tracking-wider">Valor</th>
-                <th className="py-3 px-4 text-xs font-semibold text-gray-500 uppercase tracking-wider">Método</th>
-                <th className="py-3 px-4 text-xs font-semibold text-gray-500 uppercase tracking-wider">Data</th>
-                <th className="py-3 px-4 text-xs font-semibold text-gray-500 uppercase tracking-wider">Status</th>
-                <th className="py-3 px-4 text-xs font-semibold text-gray-500 uppercase tracking-wider text-right">Ações</th>
+              <tr className="border-b" style={{ borderColor: 'var(--border)' }}>
+                <th className="py-4 px-6 text-[11px] font-bold uppercase tracking-widest" style={{ color: 'var(--text-muted)' }}>Doador</th>
+                <th className="py-4 px-6 text-[11px] font-bold uppercase tracking-widest" style={{ color: 'var(--text-muted)' }}>Conteúdo</th>
+                <th className="py-4 px-6 text-[11px] font-bold uppercase tracking-widest" style={{ color: 'var(--text-muted)' }}>Tipo</th>
+                <th className="py-4 px-6 text-[11px] font-bold uppercase tracking-widest" style={{ color: 'var(--text-muted)' }}>Data</th>
+                <th className="py-4 px-6 text-[11px] font-bold uppercase tracking-widest" style={{ color: 'var(--text-muted)' }}>Status</th>
+                <th className="py-4 px-6 text-[11px] font-bold uppercase tracking-widest text-right" style={{ color: 'var(--text-muted)' }}>Ação</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-gray-50">
+            <tbody className="divide-y" style={{ borderColor: 'var(--border)' }}>
               {loading ? (
                 <tr>
-                  <td colSpan="5" className="py-8 text-center text-gray-500"><Loader2 className="w-6 h-6 animate-spin mx-auto text-green-600" /></td>
+                  <td colSpan="6" className="py-12 text-center"><Loader2 className="w-8 h-8 animate-spin mx-auto" style={{ color: 'var(--green-primary)' }} /></td>
                 </tr>
               ) : filteredDonations.length > 0 ? (
                 filteredDonations.map((donation) => (
-                  <tr key={donation.id} className="hover:bg-gray-50/50 transition-colors">
-                    <td className="py-4 px-4 font-medium text-gray-800">{donation.user?.nome || 'Anônimo'}</td>
-                    <td className="py-4 px-4 font-semibold text-gray-900">
-                      {donation.tipo === 'financeira' ? formatCurrency(donation.valor) : donation.item}
+                  <tr key={donation.id} className="hover:bg-[var(--bg-secondary)] transition-colors">
+                    <td className="py-4 px-6">
+                      <span className="text-[14px] font-bold" style={{ color: 'var(--text-primary)' }}>{donation.user?.nome || 'Anônimo'}</span>
                     </td>
-                    <td className="py-4 px-4">
-                      <div className="flex items-center gap-2">
-                        {donation.tipo === 'financeira' ? getMethodIcon('PIX') : <Receipt className="w-5 h-5 text-gray-400" />}
-                        <span className="text-sm text-gray-600 capitalize">{donation.tipo}</span>
-                      </div>
-                    </td>
-                    <td className="py-4 px-4 text-sm text-gray-500">{new Date(donation.criadoEm).toLocaleDateString('pt-BR')}</td>
-                    <td className="py-4 px-4">
-                      <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                        donation.status === 'entregue' ? 'bg-green-100 text-green-700' : 'bg-amber-100 text-amber-700'
-                      }`}>
-                        {donation.status === 'entregue' ? 'Concluído' : 'Pendente'}
+                    <td className="py-4 px-6">
+                      <span className="text-[14px] font-bold" style={{ color: donation.tipo === 'financeira' ? 'var(--green-text)' : 'var(--text-primary)' }}>
+                        {donation.tipo === 'financeira' ? formatCurrency(donation.valor) : donation.item}
                       </span>
                     </td>
-                    <td className="py-4 px-4 text-right">
+                    <td className="py-4 px-6">
+                      <div className="flex items-center gap-2">
+                        {donation.tipo === 'financeira' ? <QrCode size={16} /> : <Package size={16} />}
+                        <span className="text-[12px] font-bold uppercase tracking-wider" style={{ color: 'var(--text-secondary)' }}>{donation.tipo}</span>
+                      </div>
+                    </td>
+                    <td className="py-4 px-6">
+                      <span className="text-[12px] font-bold uppercase tracking-widest" style={{ color: 'var(--text-muted)' }}>
+                        {new Date(donation.criadoEm).toLocaleDateString('pt-BR')}
+                      </span>
+                    </td>
+                    <td className="py-4 px-6">
+                      <div className="flex items-center gap-2">
+                        <div className="w-2 h-2 rounded-full" style={{ backgroundColor: donation.status === 'entregue' ? 'var(--green-primary)' : 'var(--amber-text)' }} />
+                        <span className="text-[13px] font-bold" style={{ color: donation.status === 'entregue' ? 'var(--green-text)' : 'var(--amber-text)' }}>
+                          {donation.status === 'entregue' ? 'Concluído' : 'Pendente'}
+                        </span>
+                      </div>
+                    </td>
+                    <td className="py-4 px-6 text-right">
                       {donation.status === 'pendente' && donation.tipo === 'item' && (
                         <button 
                           onClick={() => handleConfirmReceipt(donation.id)}
-                          className="px-3 py-1 bg-green-600 hover:bg-green-700 text-white text-xs font-bold rounded transition-colors shadow-sm"
+                          className="px-4 py-1.5 rounded-lg text-[11px] font-bold text-white transition-transform hover:scale-105 active:scale-95 shadow-sm"
+                          style={{ backgroundColor: 'var(--green-primary)' }}
                         >
                           Confirmar
                         </button>
@@ -172,7 +161,9 @@ export default function OngDonationsView() {
                 ))
               ) : (
                 <tr>
-                  <td colSpan="5" className="py-8 text-center text-gray-500">Nenhuma doação encontrada.</td>
+                  <td colSpan="6" className="py-12 text-center">
+                    <p className="text-[14px] font-medium" style={{ color: 'var(--text-muted)' }}>Nenhuma doação encontrada para estes filtros.</p>
+                  </td>
                 </tr>
               )}
             </tbody>

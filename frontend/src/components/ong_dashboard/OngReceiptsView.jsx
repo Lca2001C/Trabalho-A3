@@ -5,7 +5,7 @@ import api from '../../services/api';
 export default function OngReceiptsView() {
   const [receipts, setReceipts] = useState([]);
   const [loading, setLoading]   = useState(true);
-  const [downloading, setDownloading] = useState(null); // id do comprovante sendo baixado
+  const [downloading, setDownloading] = useState(null);
 
   useEffect(() => {
     api.get('/api/donations/institution/receipts')
@@ -14,12 +14,9 @@ export default function OngReceiptsView() {
       .finally(() => setLoading(false));
   }, []);
 
-  // Gera e "baixa" um comprovante em texto simples
-  // Substitua por chamada a um endpoint de PDF quando disponível
   const handleDownload = async (rec) => {
     setDownloading(rec.id);
     try {
-      // Tenta buscar endpoint de PDF — fallback para geração no cliente
       const conteudo = [
         '======================================',
         '   COMPROVANTE DE DOAÇÃO — ConectaBem',
@@ -49,68 +46,68 @@ export default function OngReceiptsView() {
 
   return (
     <div className="space-y-6 animate-in fade-in duration-300">
-      <div className="flex justify-between items-center mb-6">
+      <div className="flex justify-between items-end mb-2">
         <div>
-          <h2 className="text-xl font-bold text-gray-800 flex items-center gap-2">
-            <FileText className="w-5 h-5 text-green-600" /> Comprovantes
-          </h2>
-          <p className="text-sm text-gray-500 mt-1">
-            Comprovantes das doações financeiras recebidas
-          </p>
+          <h2 className="text-[24px] font-bold" style={{ color: 'var(--text-primary)' }}>Comprovantes 📄</h2>
+          <p className="text-[14px] font-medium" style={{ color: 'var(--text-secondary)' }}>Acesse os recibos oficiais de todas as doações financeiras</p>
         </div>
       </div>
 
-      <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
+      <div className="card-base p-6">
         {loading ? (
           <div className="space-y-4">
             {Array(3).fill(0).map((_, i) => (
-              <div key={i} className="animate-pulse h-16 bg-gray-100 rounded-xl" />
+              <div key={i} className="animate-pulse h-16 bg-[var(--bg-tertiary)] rounded-2xl" />
             ))}
           </div>
         ) : receipts.length === 0 ? (
-          <div className="text-center py-10 text-gray-500">
-            <FileText className="w-10 h-10 mx-auto text-gray-300 mb-3" />
-            <p className="text-sm">Nenhum comprovante disponível ainda.</p>
-            <p className="text-xs mt-1">Comprovantes aparecem quando doações financeiras são aprovadas.</p>
+          <div className="text-center py-16">
+            <div className="w-16 h-16 mx-auto mb-4 rounded-full flex items-center justify-center bg-[var(--bg-tertiary)]" style={{ color: 'var(--text-muted)' }}>
+              <FileText size={32} />
+            </div>
+            <p className="text-[15px] font-bold" style={{ color: 'var(--text-primary)' }}>Nenhum comprovante disponível</p>
+            <p className="text-[13px] font-medium mt-1" style={{ color: 'var(--text-muted)' }}>Os recibos aparecem automaticamente após o processamento das doações.</p>
           </div>
         ) : (
-          <div className="divide-y divide-gray-100">
+          <div className="grid grid-cols-1 gap-3">
             {receipts.map(rec => (
               <div
                 key={rec.id}
-                className="flex justify-between items-center py-4 first:pt-0 last:pb-0 hover:bg-gray-50/50 px-2 rounded-lg transition-colors"
+                className="flex justify-between items-center p-5 bg-[var(--bg-secondary)] rounded-2xl border transition-all hover:shadow-md"
+                style={{ borderColor: 'var(--border)' }}
               >
-                <div>
-                  <h4 className="font-medium text-gray-800">{rec.ref}</h4>
-                  <div className="flex flex-wrap gap-x-4 mt-0.5">
-                    <p className="text-sm text-gray-500">{rec.desc}</p>
-                    <p className="text-xs text-gray-400 flex items-center gap-1">
-                      <Mail className="w-3 h-3" /> {rec.doador}
-                    </p>
+                <div className="flex items-center gap-4">
+                  <div className="w-12 h-12 rounded-xl flex items-center justify-center bg-[var(--bg-primary)] border" style={{ borderColor: 'var(--border)', color: 'var(--green-primary)' }}>
+                    <FileText size={24} />
+                  </div>
+                  <div>
+                    <h4 className="text-[15px] font-bold" style={{ color: 'var(--text-primary)' }}>{rec.ref}</h4>
+                    <div className="flex items-center gap-3 mt-1">
+                      <span className="text-[12px] font-bold" style={{ color: 'var(--green-text)' }}>{rec.valor}</span>
+                      <div className="w-1 h-1 rounded-full bg-[var(--text-muted)] opacity-30" />
+                      <span className="text-[12px] font-medium" style={{ color: 'var(--text-secondary)' }}>{rec.doador}</span>
+                    </div>
                   </div>
                 </div>
-                <button
-                  onClick={() => handleDownload(rec)}
-                  disabled={downloading === rec.id}
-                  title="Baixar comprovante"
-                  className="p-2 text-gray-500 hover:text-green-600 hover:bg-green-50 rounded-lg transition-colors disabled:opacity-50"
-                >
-                  {downloading === rec.id
-                    ? <Loader2 className="w-5 h-5 animate-spin" />
-                    : <Download className="w-5 h-5" />
-                  }
-                </button>
+                <div className="flex items-center gap-4">
+                  <span className="hidden sm:block text-[11px] font-bold uppercase tracking-widest" style={{ color: 'var(--text-muted)' }}>{rec.date}</span>
+                  <button
+                    onClick={() => handleDownload(rec)}
+                    disabled={downloading === rec.id}
+                    className="w-10 h-10 flex items-center justify-center rounded-xl transition-all border hover:scale-105 active:scale-95"
+                    style={{ backgroundColor: 'var(--bg-primary)', borderColor: 'var(--border)', color: 'var(--green-primary)' }}
+                  >
+                    {downloading === rec.id
+                      ? <Loader2 className="w-5 h-5 animate-spin" />
+                      : <Download size={18} />
+                    }
+                  </button>
+                </div>
               </div>
             ))}
           </div>
         )}
       </div>
-
-      {!loading && receipts.length > 0 && (
-        <p className="text-xs text-gray-400 text-center">
-          {receipts.length} comprovante{receipts.length !== 1 ? 's' : ''} disponíve{receipts.length !== 1 ? 'is' : 'l'}
-        </p>
-      )}
     </div>
   );
 }

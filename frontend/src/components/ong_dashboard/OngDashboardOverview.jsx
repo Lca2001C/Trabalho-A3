@@ -102,96 +102,95 @@ export default function OngDashboardOverview({ setActiveTab }) {
   return (
     <div className="space-y-6 animate-in fade-in duration-300 relative">
       <div className="flex justify-between items-center mb-6">
-        <h2 className="text-xl font-bold text-gray-800">Dashboard 💚</h2>
-        <button 
-          onClick={() => setShowWithdrawModal(true)}
-          className="flex items-center gap-2 bg-green-600 hover:bg-green-700 text-white px-5 py-2.5 rounded-xl font-semibold transition-colors shadow-sm"
-        >
-          <DollarSign className="w-5 h-5" /> Sacar
-        </button>
+        <h2 className="text-[20px] font-bold" style={{ color: 'var(--text-primary)' }}>Visão Geral 📊</h2>
       </div>
 
       {/* KPI Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <div className="bg-green-50 p-6 rounded-2xl border border-green-100">
-          <p className="text-sm text-gray-600 mb-2">Total recebido (financeiro)</p>
-          {loading ? <Sk className="h-8 w-3/4" /> : <h3 className="text-2xl font-bold text-gray-900">{stats?.totalDinheiro}</h3>}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div className="card-base p-6 flex flex-col gap-1" style={{ backgroundColor: 'var(--green-light)', borderColor: 'var(--green-primary)', borderWidth: '1px' }}>
+          <p className="text-[12px] font-bold uppercase tracking-wider" style={{ color: 'var(--green-dark)' }}>Saldo em Conta</p>
+          {loading ? <Sk className="h-8 w-3/4" /> : <h3 className="text-[28px] font-bold" style={{ color: 'var(--green-text)' }}>{stats?.totalDinheiro}</h3>}
         </div>
-        <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm">
-          <p className="text-sm text-gray-600 mb-2">Doações recebidas</p>
-          {loading ? <Sk className="h-8 w-1/2" /> : <h3 className="text-2xl font-bold text-gray-900">{stats?.totalDoacoes}</h3>}
+        <div className="card-base p-6 flex flex-col gap-1">
+          <p className="text-[12px] font-bold uppercase tracking-wider" style={{ color: 'var(--text-secondary)' }}>Total Doações</p>
+          {loading ? <Sk className="h-8 w-1/2" /> : <h3 className="text-[28px] font-bold" style={{ color: 'var(--text-primary)' }}>{stats?.totalDoacoes}</h3>}
         </div>
-        <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm">
-          <p className="text-sm text-gray-600 mb-2">Doadores únicos</p>
-          {loading ? <Sk className="h-8 w-1/2" /> : <h3 className="text-2xl font-bold text-gray-900">{stats?.doadores}</h3>}
+        <div className="card-base p-6 flex flex-col gap-1">
+          <p className="text-[12px] font-bold uppercase tracking-wider" style={{ color: 'var(--text-secondary)' }}>Doadores Únicos</p>
+          {loading ? <Sk className="h-8 w-1/2" /> : <h3 className="text-[28px] font-bold" style={{ color: 'var(--text-primary)' }}>{stats?.doadores}</h3>}
         </div>
       </div>
 
       {/* Chart placeholder + lista recente */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Gráfico de barras estático — substituir por Recharts quando backend tiver dados mensais */}
-        <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm">
-          <h3 className="text-sm font-semibold text-gray-700 mb-4">
-            Doações financeiras <span className="font-normal text-gray-500">(Últimos 6 meses)</span>
+        {/* Gráfico de barras estático */}
+        <div className="card-base p-6">
+          <h3 className="text-[15px] font-bold mb-4" style={{ color: 'var(--text-primary)' }}>
+            Volume de Arrecadação <span className="font-normal text-[13px]" style={{ color: 'var(--text-secondary)' }}>(6 meses)</span>
           </h3>
-          <div className="h-48 flex items-end justify-between gap-2 pt-4">
+          <div className="h-48 flex items-end justify-between gap-3 pt-4 px-2">
             {[20, 45, 65, 40, 75, 85].map((height, i) => (
-              <div key={i} className="w-1/6 flex flex-col items-center gap-2">
-                <div className="w-8 bg-green-500 rounded-t-sm transition-all duration-500 hover:bg-green-600"
-                  style={{ height: `${height}%` }} />
-                <span className="text-xs text-gray-500">{['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun'][i]}</span>
+              <div key={i} className="w-full flex flex-col items-center gap-3">
+                <div className="w-full max-w-[32px] rounded-t-md transition-all duration-300 hover:opacity-80"
+                  style={{ height: `${height}%`, backgroundColor: 'var(--green-primary)' }} />
+                <span className="text-[11px] font-medium" style={{ color: 'var(--text-muted)' }}>{['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun'][i]}</span>
               </div>
             ))}
           </div>
         </div>
 
         {/* Doações recentes */}
-        <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm flex flex-col">
-          <h3 className="text-sm font-semibold text-gray-700 mb-4">Transações recentes</h3>
-          <div className="space-y-4 flex-grow">
+        <div className="card-base p-6 flex flex-col">
+          <h3 className="text-[15px] font-bold mb-4" style={{ color: 'var(--text-primary)' }}>Transações Recentes</h3>
+          <div className="space-y-1 flex-grow">
             {loading
-              ? Array(3).fill(0).map((_, i) => <Sk key={i} className="h-10 w-full" />)
+              ? Array(3).fill(0).map((_, i) => <Sk key={i} className="h-12 w-full mb-2" />)
               : recentDonations.length === 0
-                ? <p className="text-sm text-gray-400 text-center py-4">Nenhuma doação recebida.</p>
+                ? <p className="text-sm text-center py-8" style={{ color: 'var(--text-muted)' }}>Nenhuma transação financeira registrada.</p>
                 : recentDonations.map(d => (
-                  <div key={d.id} className="flex justify-between items-center py-2 border-b border-gray-50 last:border-0">
-                    <div className="flex flex-col">
-                      <span className={`font-medium ${d.isSaque ? 'text-red-600' : 'text-green-600'}`}>{d.amount}</span>
-                      <span className="text-xs text-gray-500">{d.name}</span>
+                  <div key={d.id} className="flex justify-between items-center py-3 border-b last:border-0" style={{ borderColor: 'var(--border)' }}>
+                    <div className="flex flex-col gap-0.5">
+                      <span className="text-[14px] font-bold" style={{ color: d.isSaque ? 'var(--coral-text)' : 'var(--green-text)' }}>
+                        {d.amount}
+                      </span>
+                      <span className="text-[12px] font-medium" style={{ color: 'var(--text-secondary)' }}>{d.name}</span>
                     </div>
-                    <span className="text-xs text-gray-400">{d.date}</span>
+                    <span className="text-[11px] font-bold uppercase tracking-widest" style={{ color: 'var(--text-muted)' }}>{d.date}</span>
                   </div>
                 ))
             }
           </div>
           <button
-            className="text-green-600 text-sm font-medium self-end mt-4 hover:underline"
+            className="text-[13px] font-bold mt-4 self-end transition-opacity hover:opacity-70"
+            style={{ color: 'var(--green-primary)' }}
             onClick={() => setActiveTab('doacoes')}
           >
-            Ver todas
+            Ver extrato completo →
           </button>
         </div>
       </div>
 
+
       {/* Modal de Saque PIX */}
       {showWithdrawModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
-          <div className="bg-white w-full max-w-md rounded-2xl p-6 shadow-xl relative animate-in zoom-in-95 duration-200">
-            <h3 className="text-lg font-bold text-gray-900 mb-2">Saque via PIX</h3>
-            <p className="text-sm text-gray-500 mb-6">Transfira o saldo disponível para sua conta.</p>
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-md animate-in fade-in duration-300">
+          <div className="card-base w-full max-w-md p-8 shadow-2xl relative animate-in zoom-in-95 duration-200" style={{ backgroundColor: 'var(--bg-primary)' }}>
+            <h3 className="text-[20px] font-bold mb-1" style={{ color: 'var(--text-primary)' }}>Solicitar Saque 🏦</h3>
+            <p className="text-[14px] font-medium mb-6" style={{ color: 'var(--text-secondary)' }}>Transfira o saldo disponível para sua conta PIX.</p>
             
-            <div className="bg-green-50 border border-green-100 rounded-xl p-4 mb-6">
-              <p className="text-sm text-green-800 font-medium">Saldo Disponível</p>
-              <p className="text-3xl font-bold text-green-700 mt-1">R$ {rawBalance.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</p>
+            <div className="p-5 mb-6 flex flex-col gap-1 rounded-2xl border" style={{ backgroundColor: 'var(--bg-secondary)', borderColor: 'var(--border)' }}>
+              <p className="text-[12px] font-bold uppercase tracking-wider" style={{ color: 'var(--text-muted)' }}>Saldo Disponível</p>
+              <p className="text-[32px] font-bold" style={{ color: 'var(--green-primary)' }}>R$ {rawBalance.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</p>
             </div>
 
-            <form onSubmit={handleWithdraw} className="space-y-4">
+            <form onSubmit={handleWithdraw} className="space-y-5">
               <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-1">Tipo de Chave</label>
+                <label className="block text-[13px] font-bold mb-1.5" style={{ color: 'var(--text-primary)' }}>Tipo de Chave</label>
                 <select 
                   value={withdrawData.type}
                   onChange={(e) => setWithdrawData({ ...withdrawData, type: e.target.value, key: '' })}
-                  className="w-full border border-gray-300 rounded-xl px-4 py-3 text-sm focus:ring-2 focus:ring-green-500 outline-none bg-white"
+                  className="w-full h-[48px] px-4 rounded-xl text-[14px] font-medium focus:ring-2 focus:ring-green-500 outline-none border transition-all"
+                  style={{ backgroundColor: 'var(--bg-tertiary)', borderColor: 'var(--border)', color: 'var(--text-primary)' }}
                 >
                   <option value="CPF">CPF</option>
                   <option value="CNPJ">CNPJ</option>
@@ -201,19 +200,20 @@ export default function OngDashboardOverview({ setActiveTab }) {
               </div>
 
               <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-1">Chave PIX</label>
+                <label className="block text-[13px] font-bold mb-1.5" style={{ color: 'var(--text-primary)' }}>Chave PIX</label>
                 <input 
                   type={withdrawData.type === 'E-mail' ? 'email' : 'text'}
                   value={withdrawData.key}
                   onChange={(e) => setWithdrawData({ ...withdrawData, key: handleMask(e.target.value, withdrawData.type) })}
                   placeholder={`Digite seu ${withdrawData.type}`}
                   required
-                  className="w-full border border-gray-300 rounded-xl px-4 py-3 text-sm focus:ring-2 focus:ring-green-500 outline-none"
+                  className="w-full h-[48px] px-4 rounded-xl text-[14px] font-medium focus:ring-2 focus:ring-green-500 outline-none border transition-all"
+                  style={{ backgroundColor: 'var(--bg-tertiary)', borderColor: 'var(--border)', color: 'var(--text-primary)' }}
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-1">Valor a Sacar (R$)</label>
+                <label className="block text-[13px] font-bold mb-1.5" style={{ color: 'var(--text-primary)' }}>Valor a Sacar (R$)</label>
                 <input 
                   type="number"
                   step="0.01"
@@ -221,32 +221,36 @@ export default function OngDashboardOverview({ setActiveTab }) {
                   max={rawBalance}
                   value={withdrawData.amount}
                   onChange={(e) => setWithdrawData({ ...withdrawData, amount: e.target.value })}
-                  placeholder={`Mínimo R$ 0,01. Máximo R$ ${rawBalance.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`}
+                  placeholder="0,00"
                   required
-                  className="w-full border border-gray-300 rounded-xl px-4 py-3 text-sm focus:ring-2 focus:ring-green-500 outline-none"
+                  className="w-full h-[48px] px-4 rounded-xl text-[14px] font-bold focus:ring-2 focus:ring-green-500 outline-none border transition-all"
+                  style={{ backgroundColor: 'var(--bg-tertiary)', borderColor: 'var(--border)', color: 'var(--green-primary)' }}
                 />
               </div>
 
-              <div className="flex gap-3 pt-4">
+              <div className="flex gap-4 pt-4">
                 <button 
                   type="button" 
                   onClick={() => setShowWithdrawModal(false)}
-                  className="flex-1 py-3 bg-gray-100 hover:bg-gray-200 text-gray-700 font-semibold rounded-xl transition-colors"
+                  className="flex-1 h-[50px] rounded-xl text-[14px] font-bold transition-all hover:bg-[rgba(0,0,0,0.05)]"
+                  style={{ backgroundColor: 'var(--bg-tertiary)', color: 'var(--text-secondary)' }}
                 >
                   Cancelar
                 </button>
                 <button 
                   type="submit" 
                   disabled={withdrawing || rawBalance <= 0}
-                  className="flex-1 flex justify-center items-center py-3 bg-green-600 hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed text-white font-semibold rounded-xl transition-colors"
+                  className="flex-1 h-[50px] flex justify-center items-center rounded-xl text-[14px] font-bold text-white shadow-lg shadow-emerald-200 transition-all hover:scale-[1.02] disabled:opacity-50 disabled:scale-100"
+                  style={{ backgroundColor: 'var(--green-primary)' }}
                 >
-                  {withdrawing ? <Loader2 className="w-5 h-5 animate-spin" /> : 'Solicitar Saque'}
+                  {withdrawing ? <Loader2 className="w-5 h-5 animate-spin" /> : 'Confirmar Saque'}
                 </button>
               </div>
             </form>
           </div>
         </div>
       )}
+
     </div>
   );
 }

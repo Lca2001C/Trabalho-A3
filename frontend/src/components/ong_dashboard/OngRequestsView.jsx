@@ -3,9 +3,15 @@ import { ClipboardList, Plus, Package, X, Loader2 } from 'lucide-react';
 import api from '../../services/api';
 
 const URGENCY_STYLE = {
-  Alta: 'text-red-600',
-  Média: 'text-amber-600',
-  Baixa: 'text-green-600',
+  Alta: 'var(--coral-text)',
+  Média: 'var(--amber-text)',
+  Baixa: 'var(--green-text)',
+};
+
+const URGENCY_BG = {
+  Alta: 'var(--pink-light)',
+  Média: 'var(--amber-light)',
+  Baixa: 'var(--green-light)',
 };
 
 export default function OngRequestsView() {
@@ -37,12 +43,11 @@ export default function OngRequestsView() {
         urgency: newRequest.urgency,
       });
 
-      // Adiciona a nova solicitação ao topo da lista sem refetch
       setRequestsList(prev => [res.data, ...prev]);
       setIsModalOpen(false);
       setNewRequest({ name: '', qty: '', urgency: 'Média' });
     } catch (err) {
-      setError(err.response?.data?.erro ?? 'Erro ao criar solicitação. Tente novamente.');
+      setError(err.response?.data?.erro ?? 'Erro ao criar solicitação.');
     } finally {
       setSubmitting(false);
     }
@@ -50,55 +55,60 @@ export default function OngRequestsView() {
 
   return (
     <div className="space-y-6 animate-in fade-in duration-300 relative">
-      <div className="flex justify-between items-center mb-6">
+      <div className="flex justify-between items-end mb-2">
         <div>
-          <h2 className="text-xl font-bold text-gray-800 flex items-center gap-2">
-            <ClipboardList className="w-5 h-5 text-gray-500" /> Solicitações de Itens
-          </h2>
-          <p className="text-sm text-gray-500 mt-1">Solicite itens que sua ONG precisa</p>
+          <h2 className="text-[24px] font-bold" style={{ color: 'var(--text-primary)' }}>Solicitações de Itens 📦</h2>
+          <p className="text-[14px] font-medium" style={{ color: 'var(--text-secondary)' }}>Gerencie o que sua instituição mais precisa no momento</p>
         </div>
         <button
           onClick={() => setIsModalOpen(true)}
-          className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors flex items-center gap-2"
+          className="h-[46px] px-6 rounded-xl text-[14px] font-bold text-white shadow-lg shadow-emerald-200 transition-all hover:scale-[1.03] active:scale-[0.98] flex items-center gap-2"
+          style={{ backgroundColor: 'var(--green-primary)' }}
         >
-          <Plus className="w-4 h-4" /> Nova solicitação
+          <Plus size={18} strokeWidth={3} /> Nova Solicitação
         </button>
       </div>
 
-      <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
+      <div className="card-base p-0 overflow-hidden">
         {loading ? (
-          <div className="space-y-4">
+          <div className="p-6 space-y-4">
             {Array(3).fill(0).map((_, i) => (
-              <div key={i} className="animate-pulse h-16 bg-gray-100 rounded-xl" />
+              <div key={i} className="animate-pulse h-16 bg-[var(--bg-tertiary)] rounded-xl" />
             ))}
           </div>
         ) : requestsList.length === 0 ? (
-          <p className="text-center text-gray-500 py-4">Nenhuma solicitação criada ainda.</p>
+          <div className="p-12 text-center">
+            <p className="text-[15px] font-medium" style={{ color: 'var(--text-muted)' }}>Sua ONG ainda não criou nenhuma solicitação de itens.</p>
+          </div>
         ) : (
-          <div className="space-y-4">
+          <div className="divide-y divide-[var(--border)]">
             {requestsList.map(req => (
-              <div key={req.id} className="flex items-center justify-between p-4 border-b border-gray-100 last:border-0 hover:bg-gray-50 transition-colors rounded-lg">
+              <div key={req.id} className="flex items-center justify-between p-5 hover:bg-[var(--bg-secondary)] transition-colors">
                 <div className="flex items-center gap-4">
-                  <div className="w-10 h-10 bg-gray-100 rounded-full flex items-center justify-center text-gray-500">
-                    <Package className="w-5 h-5" />
+                  <div className="w-12 h-12 rounded-2xl flex items-center justify-center" style={{ backgroundColor: 'var(--bg-tertiary)', color: 'var(--text-secondary)' }}>
+                    <Package size={22} />
                   </div>
                   <div>
-                    <h4 className="font-medium text-gray-800">{req.name}</h4>
-                    <div className="flex gap-3 mt-1">
-                      <span className="text-xs text-gray-500">Quantidade: {req.qty}</span>
-                      <span className="text-xs text-gray-500">
-                        Urgência: <span className={`font-medium ${URGENCY_STYLE[req.urgency] ?? 'text-gray-700'}`}>{req.urgency}</span>
+                    <h4 className="text-[15px] font-bold" style={{ color: 'var(--text-primary)' }}>{req.name}</h4>
+                    <div className="flex items-center gap-3 mt-1">
+                      <span className="text-[12px] font-bold px-2 py-0.5 rounded-md" style={{ backgroundColor: 'var(--bg-tertiary)', color: 'var(--text-secondary)' }}>
+                        Qtd: {req.qty}
+                      </span>
+                      <span className="text-[11px] font-bold px-2 py-0.5 rounded-md uppercase tracking-wider" 
+                            style={{ backgroundColor: URGENCY_BG[req.urgency], color: URGENCY_STYLE[req.urgency] }}>
+                        {req.urgency}
                       </span>
                     </div>
                   </div>
                 </div>
                 <div className="flex flex-col items-end gap-2">
-                  <span className="text-sm text-gray-400">{req.date}</span>
-                  <span className={`px-3 py-1 text-xs font-medium rounded-full ${
-                    req.status === 'Atendido' ? 'bg-green-100 text-green-700' : 'bg-amber-100 text-amber-700'
-                  }`}>
-                    {req.status}
-                  </span>
+                  <span className="text-[11px] font-bold uppercase tracking-widest" style={{ color: 'var(--text-muted)' }}>{req.date}</span>
+                  <div className="flex items-center gap-2">
+                    <div className="w-2 h-2 rounded-full" style={{ backgroundColor: req.status === 'Atendido' ? 'var(--green-primary)' : 'var(--amber-text)' }} />
+                    <span className="text-[13px] font-bold" style={{ color: req.status === 'Atendido' ? 'var(--green-text)' : 'var(--amber-text)' }}>
+                      {req.status}
+                    </span>
+                  </div>
                 </div>
               </div>
             ))}
@@ -108,65 +118,69 @@ export default function OngRequestsView() {
 
       {/* Modal */}
       {isModalOpen && (
-        <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 animate-in fade-in">
-          <div className="bg-white rounded-2xl p-6 w-full max-w-md shadow-xl">
-            <div className="flex justify-between items-center mb-4">
-              <h3 className="text-lg font-bold text-gray-800">Criar Nova Solicitação</h3>
-              <button onClick={() => { setIsModalOpen(false); setError(''); }} className="text-gray-400 hover:text-gray-600">
-                <X className="w-5 h-5" />
+        <div className="fixed inset-0 bg-black/40 backdrop-blur-md flex items-center justify-center z-50 animate-in fade-in">
+          <div className="card-base p-8 w-full max-w-md shadow-2xl relative" style={{ backgroundColor: 'var(--bg-primary)' }}>
+            <div className="flex justify-between items-center mb-6">
+              <h3 className="text-[20px] font-bold" style={{ color: 'var(--text-primary)' }}>Nova Solicitação 📝</h3>
+              <button onClick={() => { setIsModalOpen(false); setError(''); }} className="text-[var(--text-muted)] hover:text-[var(--text-primary)]">
+                <X className="w-6 h-6" />
               </button>
             </div>
 
-            {error && <p className="text-red-500 text-sm mb-4">{error}</p>}
+            {error && <p className="text-red-500 text-[13px] font-bold mb-4 p-3 bg-red-50 rounded-xl">{error}</p>}
 
-            <form onSubmit={handleCreateRequest} className="space-y-4">
+            <form onSubmit={handleCreateRequest} className="space-y-5">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Nome do Item</label>
+                <label className="block text-[13px] font-bold mb-1.5" style={{ color: 'var(--text-primary)' }}>O que sua ONG precisa?</label>
                 <input
                   type="text" required
-                  placeholder="Ex: Fraldas P, Arroz, etc."
+                  placeholder="Ex: Fraldas P, Arroz, Cobertores..."
                   value={newRequest.name}
                   onChange={e => setNewRequest({ ...newRequest, name: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 outline-none transition-all"
+                  className="w-full h-[48px] px-4 rounded-xl text-[14px] font-medium outline-none border transition-all focus:ring-2 focus:ring-green-500"
+                  style={{ backgroundColor: 'var(--bg-tertiary)', borderColor: 'var(--border)', color: 'var(--text-primary)' }}
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Quantidade</label>
+                <label className="block text-[13px] font-bold mb-1.5" style={{ color: 'var(--text-primary)' }}>Quantidade / Unidade</label>
                 <input
                   type="text" required
-                  placeholder="Ex: 50 pacotes"
+                  placeholder="Ex: 50 pacotes, 100 unidades..."
                   value={newRequest.qty}
                   onChange={e => setNewRequest({ ...newRequest, qty: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 outline-none transition-all"
+                  className="w-full h-[48px] px-4 rounded-xl text-[14px] font-medium outline-none border transition-all focus:ring-2 focus:ring-green-500"
+                  style={{ backgroundColor: 'var(--bg-tertiary)', borderColor: 'var(--border)', color: 'var(--text-primary)' }}
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Urgência</label>
+                <label className="block text-[13px] font-bold mb-1.5" style={{ color: 'var(--text-primary)' }}>Nível de Urgência</label>
                 <select
                   value={newRequest.urgency}
                   onChange={e => setNewRequest({ ...newRequest, urgency: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 outline-none transition-all bg-white"
+                  className="w-full h-[48px] px-4 rounded-xl text-[14px] font-medium outline-none border transition-all focus:ring-2 focus:ring-green-500"
+                  style={{ backgroundColor: 'var(--bg-tertiary)', borderColor: 'var(--border)', color: 'var(--text-primary)' }}
                 >
-                  <option value="Baixa">Baixa</option>
-                  <option value="Média">Média</option>
-                  <option value="Alta">Alta</option>
+                  <option value="Baixa">🟢 Baixa</option>
+                  <option value="Média">🟡 Média</option>
+                  <option value="Alta">🔴 Alta</option>
                 </select>
               </div>
 
-              <div className="flex gap-3 pt-4">
+              <div className="flex gap-4 pt-4">
                 <button
                   type="button"
                   onClick={() => { setIsModalOpen(false); setError(''); }}
-                  className="flex-1 py-2 px-4 border border-gray-300 text-gray-700 rounded-lg font-medium hover:bg-gray-50 transition-colors"
+                  className="flex-1 h-[50px] rounded-xl text-[14px] font-bold transition-all hover:bg-[rgba(0,0,0,0.05)]"
+                  style={{ backgroundColor: 'var(--bg-tertiary)', color: 'var(--text-secondary)' }}
                 >
                   Cancelar
                 </button>
                 <button
                   type="submit"
                   disabled={submitting}
-                  className="flex-1 py-2 px-4 bg-green-600 text-white rounded-lg font-medium hover:bg-green-700 transition-colors disabled:opacity-60 flex items-center justify-center"
+                  className="flex-1 h-[50px] flex items-center justify-center bg-[var(--green-primary)] text-white rounded-xl text-[14px] font-bold shadow-lg shadow-emerald-200 transition-all hover:scale-[1.02] disabled:opacity-50"
                 >
-                  {submitting ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Salvar Solicitação'}
+                  {submitting ? <Loader2 className="w-5 h-5 animate-spin" /> : 'Publicar Solicitação'}
                 </button>
               </div>
             </form>

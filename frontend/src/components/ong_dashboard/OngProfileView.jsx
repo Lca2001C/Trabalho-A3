@@ -68,123 +68,147 @@ export default function OngProfileView() {
     value:    form[key],
     onChange: e => setForm(f => ({ ...f, [key]: e.target.value })),
     disabled: !editMode || submitting,
-    className: `w-full rounded-lg border px-3 py-2 text-sm text-gray-800 transition-colors outline-none ${
+    className: `w-full h-[48px] px-4 rounded-xl text-[14px] font-medium transition-all outline-none border ${
       editMode
-        ? 'border-gray-300 bg-white focus:ring-2 focus:ring-green-500 focus:border-green-500'
-        : 'border-transparent bg-gray-50 cursor-default'
+        ? 'focus:ring-2 focus:ring-green-500'
+        : 'border-transparent cursor-default'
     }`,
+    style: { 
+      backgroundColor: editMode ? 'var(--bg-tertiary)' : 'var(--bg-secondary)', 
+      borderColor: editMode ? 'var(--border)' : 'transparent',
+      color: 'var(--text-primary)'
+    }
   });
 
   return (
-    <div className="space-y-6 animate-in fade-in duration-300 max-w-2xl">
-      <div className="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden">
-        {/* Header */}
-        <div className="p-6 border-b border-gray-100 flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <User className="w-5 h-5 text-gray-600" />
-            <h2 className="text-lg font-semibold text-gray-800">Perfil da ONG</h2>
-          </div>
-          {!editMode ? (
-            <button
-              onClick={() => setEditMode(true)}
-              className="flex items-center gap-2 text-sm text-green-600 font-medium hover:text-green-700 transition-colors"
-            >
-              <Pencil className="w-4 h-4" /> Editar perfil
-            </button>
-          ) : (
-            <button
-              onClick={handleCancel}
-              className="flex items-center gap-2 text-sm text-gray-500 font-medium hover:text-gray-700 transition-colors"
-            >
-              <X className="w-4 h-4" /> Cancelar
-            </button>
-          )}
+    <div className="space-y-6 animate-in fade-in duration-300 max-w-3xl">
+      <div className="flex justify-between items-end mb-2">
+        <div>
+          <h2 className="text-[24px] font-bold" style={{ color: 'var(--text-primary)' }}>Perfil da ONG 🏢</h2>
+          <p className="text-[14px] font-medium" style={{ color: 'var(--text-secondary)' }}>Mantenha os dados da sua instituição sempre atualizados</p>
         </div>
+        {!editMode ? (
+          <button
+            onClick={() => setEditMode(true)}
+            className="h-[46px] px-6 rounded-xl text-[14px] font-bold text-white shadow-lg shadow-emerald-200 transition-all hover:scale-[1.03] active:scale-[0.98] flex items-center gap-2"
+            style={{ backgroundColor: 'var(--green-primary)' }}
+          >
+            <Pencil size={18} /> Editar Perfil
+          </button>
+        ) : (
+          <button
+            onClick={handleCancel}
+            className="h-[46px] px-6 rounded-xl text-[14px] font-bold transition-all hover:bg-[rgba(0,0,0,0.05)] flex items-center gap-2"
+            style={{ backgroundColor: 'var(--bg-tertiary)', color: 'var(--text-secondary)' }}
+          >
+            <X size={18} /> Cancelar
+          </button>
+        )}
+      </div>
 
-        <form onSubmit={handleSave} className="p-6 space-y-6">
+      <div className="card-base p-8">
+        <form onSubmit={handleSave} className="space-y-8">
           {/* Feedback banner */}
           {feedback && (
-            <div className={`flex items-center gap-2 p-3 rounded-lg text-sm font-medium border ${
+            <div className={`flex items-center gap-2 p-4 rounded-xl text-[14px] font-bold border animate-in slide-in-from-top-2 ${
               feedback.type === 'success'
                 ? 'bg-green-50 border-green-200 text-green-700'
                 : 'bg-red-50 border-red-200 text-red-700'
             }`}>
               {feedback.type === 'success'
-                ? <CheckCircle2 className="w-4 h-4 shrink-0" />
-                : <AlertCircle  className="w-4 h-4 shrink-0" />
+                ? <CheckCircle2 size={18} className="shrink-0" />
+                : <AlertCircle size={18} className="shrink-0" />
               }
               {feedback.message}
             </div>
           )}
 
-          <h3 className="text-sm font-medium text-gray-500 uppercase tracking-wider">
-            Informações da ONG
-          </h3>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+            {/* Informações Básicas */}
+            <div className="space-y-6">
+              <h3 className="text-[12px] font-bold uppercase tracking-widest" style={{ color: 'var(--text-muted)' }}>Dados Principais</h3>
+              
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-[13px] font-bold mb-1.5" style={{ color: 'var(--text-primary)' }}>Nome da Instituição</label>
+                  <input type="text" {...field('nome')} placeholder="Nome completo" />
+                </div>
+                
+                <div>
+                  <label className="block text-[13px] font-bold mb-1.5" style={{ color: 'var(--text-primary)' }}>Telefone de Contato</label>
+                  <input type="text" {...field('telefone')} placeholder="(00) 00000-0000" />
+                </div>
 
-          <div className="space-y-4">
-            {/* Campos que permitem edição */}
-            {[
-              { label: 'Nome da ONG',    key: 'nome',     type: 'text'  },
-              { label: 'Telefone',       key: 'telefone', type: 'text'  },
-              { label: 'Endereço',       key: 'endereco', type: 'text'  },
-            ].map(({ label, key, type }) => (
-              <div key={key} className="grid grid-cols-3 items-center gap-4 py-2 border-b border-gray-50">
-                <label className="text-sm text-gray-500">{label}</label>
-                <div className="col-span-2">
-                  <input type={type} {...field(key)} placeholder={editMode ? label : '—'} />
+                <div>
+                  <label className="block text-[13px] font-bold mb-1.5" style={{ color: 'var(--text-primary)' }}>Endereço Completo</label>
+                  <input type="text" {...field('endereco')} placeholder="Rua, Número, Bairro, Cidade" />
                 </div>
               </div>
-            ))}
-
-            {/* CNPJ — somente leitura */}
-            <div className="grid grid-cols-3 items-center gap-4 py-2 border-b border-gray-50">
-              <span className="text-sm text-gray-500">CNPJ</span>
-              <span className="text-sm font-medium text-gray-800 col-span-2">
-                {user?.cnpj ?? '—'}
-              </span>
             </div>
 
-            {/* E-mail — somente leitura */}
-            <div className="grid grid-cols-3 items-center gap-4 py-2 border-b border-gray-50">
-              <span className="text-sm text-gray-500">E-mail</span>
-              <span className="text-sm font-medium text-gray-800 col-span-2">
-                {user?.email ?? '—'}
-              </span>
-            </div>
+            {/* Informações de Registro (Read Only) */}
+            <div className="space-y-6">
+              <h3 className="text-[12px] font-bold uppercase tracking-widest" style={{ color: 'var(--text-muted)' }}>Registro e Acesso</h3>
+              
+              <div className="p-6 rounded-2xl border flex flex-col gap-5" style={{ backgroundColor: 'var(--bg-secondary)', borderColor: 'var(--border)' }}>
+                <div className="flex flex-col gap-1">
+                  <span className="text-[11px] font-bold uppercase tracking-wider" style={{ color: 'var(--text-muted)' }}>CNPJ da Instituição</span>
+                  <span className="text-[15px] font-bold" style={{ color: 'var(--text-primary)' }}>{user?.cnpj || 'Não informado'}</span>
+                </div>
+                
+                <div className="flex flex-col gap-1">
+                  <span className="text-[11px] font-bold uppercase tracking-wider" style={{ color: 'var(--text-muted)' }}>E-mail Administrativo</span>
+                  <span className="text-[15px] font-bold" style={{ color: 'var(--text-primary)' }}>{user?.email || 'Não informado'}</span>
+                </div>
 
-            {/* Descrição */}
-            <div className="py-2 border-b border-gray-50">
-              <label className="text-sm text-gray-500 block mb-2">Descrição da ONG</label>
-              <textarea
-                rows={3}
-                placeholder={editMode ? 'Descreva a missão e objetivos da sua ONG...' : '—'}
-                {...field('descricaoInstituicao')}
-              />
-            </div>
-
-            {/* Necessidades urgentes */}
-            <div className="py-2">
-              <label className="text-sm text-gray-500 block mb-2">Necessidades urgentes</label>
-              <textarea
-                rows={2}
-                placeholder={editMode ? 'Ex: Roupas de inverno, alimentos não perecíveis...' : '—'}
-                {...field('necessidadesUrgentes')}
-              />
+                <div className="flex flex-col gap-1">
+                  <span className="text-[11px] font-bold uppercase tracking-wider" style={{ color: 'var(--text-muted)' }}>Status da Conta</span>
+                  <div className="flex items-center gap-2">
+                    <div className="w-2 h-2 rounded-full bg-green-500" />
+                    <span className="text-[14px] font-bold text-green-600">Ativa e Verificada</span>
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
 
-          {/* Botão Salvar — só aparece em modo edição */}
+          <div className="space-y-6 pt-2">
+            <h3 className="text-[12px] font-bold uppercase tracking-widest" style={{ color: 'var(--text-muted)' }}>Sobre a Instituição</h3>
+            
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+              <div>
+                <label className="block text-[13px] font-bold mb-1.5" style={{ color: 'var(--text-primary)' }}>Missão e Descrição</label>
+                <textarea
+                  rows={4}
+                  placeholder={editMode ? 'Conte um pouco sobre o trabalho da sua ONG...' : 'Sem descrição.'}
+                  {...field('descricaoInstituicao')}
+                  className={`${field('descricaoInstituicao').className} h-auto py-3 resize-none`}
+                />
+              </div>
+
+              <div>
+                <label className="block text-[13px] font-bold mb-1.5" style={{ color: 'var(--text-primary)' }}>Necessidades mais Críticas</label>
+                <textarea
+                  rows={4}
+                  placeholder={editMode ? 'Quais itens sua instituição mais precisa hoje?' : 'Não informado.'}
+                  {...field('necessidadesUrgentes')}
+                  className={`${field('necessidadesUrgentes').className} h-auto py-3 resize-none`}
+                />
+              </div>
+            </div>
+          </div>
+
+          {/* Botão Salvar */}
           {editMode && (
-            <div className="pt-2 flex justify-end">
+            <div className="pt-4 flex justify-end">
               <button
                 type="submit"
                 disabled={submitting}
-                className="flex items-center gap-2 bg-green-600 hover:bg-green-700 text-white font-medium py-2.5 px-8 rounded-lg transition-colors disabled:opacity-60"
+                className="h-[52px] px-10 rounded-xl text-[15px] font-bold text-white shadow-lg shadow-emerald-200 transition-all hover:scale-[1.02] disabled:opacity-50 flex items-center justify-center gap-3"
+                style={{ backgroundColor: 'var(--green-primary)' }}
               >
-                {submitting
-                  ? <><Loader2 className="w-4 h-4 animate-spin" /> Salvando...</>
-                  : <><Save className="w-4 h-4" /> Salvar alterações</>
-                }
+                {submitting ? <Loader2 size={20} className="animate-spin" /> : <Save size={20} />}
+                {submitting ? 'Salvando...' : 'Salvar Alterações'}
               </button>
             </div>
           )}

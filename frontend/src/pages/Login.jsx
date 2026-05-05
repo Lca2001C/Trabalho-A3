@@ -46,15 +46,15 @@ export default function Login() {
   };
 
   return (
-    <div className="bg-[#f4f8f5] text-gray-800 font-sans antialiased overflow-x-hidden min-h-screen flex items-center justify-center p-6">
+    <div className="bg-[var(--bg-secondary)] text-[var(--text-primary)] font-sans antialiased overflow-x-hidden min-h-screen flex items-center justify-center p-6 transition-colors duration-300">
       <AuthLayout>
         <div className="text-center mb-8">
-          <h1 className="text-2xl font-extrabold text-gray-900 mb-2">Bem-vindo de volta!</h1>
-          <p className="text-sm text-gray-500">Faça login para continuar</p>
+          <h1 className="text-2xl font-extrabold text-[var(--text-primary)] mb-2">Bem-vindo de volta!</h1>
+          <p className="text-sm text-[var(--text-secondary)]">Faça login para continuar</p>
         </div>
 
         {error && (
-          <div className="mb-6 p-3 bg-red-50 border border-red-100 text-red-600 text-sm rounded-lg text-center">
+          <div className="mb-6 p-4 bg-red-50 border border-red-100 text-red-600 text-[13px] font-bold rounded-xl text-center">
             {error}
           </div>
         )}
@@ -80,7 +80,8 @@ export default function Login() {
             <div className="absolute top-0 right-0 mt-0.5">
               <Link 
                 to="/forgot-password"
-                className="text-xs font-semibold text-[#22a055] hover:underline"
+                className="text-xs font-bold transition-opacity hover:opacity-70"
+                style={{ color: 'var(--green-primary)' }}
               >
                 Esqueceu sua senha?
               </Link>
@@ -88,14 +89,15 @@ export default function Login() {
           </div>
 
           <div className="flex items-center mb-6 mt-1 ml-1">
-            <input type="checkbox" id="lembrar" className="w-4 h-4 rounded border-gray-300 text-[#22a055] focus:ring-[#22a055] accent-[#22a055] cursor-pointer" />
-            <label htmlFor="lembrar" className="ml-2 text-xs font-semibold text-gray-600 cursor-pointer">Lembrar de mim</label>
+            <input type="checkbox" id="lembrar" className="w-4 h-4 rounded border-gray-300 focus:ring-[var(--green-primary)] accent-[var(--green-primary)] cursor-pointer" />
+            <label htmlFor="lembrar" className="ml-2 text-xs font-semibold text-[var(--text-secondary)] cursor-pointer">Lembrar de mim</label>
           </div>
 
           <button 
             type="submit" 
             disabled={isLoading} 
-            className="w-full py-3.5 bg-[#22a055] text-white text-sm font-bold rounded-2xl hover:bg-[#1b8044] transition-all shadow-md hover:shadow-lg active:scale-[0.98] disabled:opacity-70 flex justify-center items-center"
+            className="w-full h-[54px] text-white text-[15px] font-bold rounded-2xl transition-all shadow-lg shadow-emerald-200 hover:shadow-emerald-300 active:scale-[0.98] disabled:opacity-70 flex justify-center items-center"
+            style={{ backgroundColor: 'var(--green-primary)' }}
           >
             {isLoading ? (
               <svg className="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
@@ -108,9 +110,9 @@ export default function Login() {
           </button>
         </form>
 
-        <div className="mt-8 text-center text-sm font-medium text-gray-600">
+        <div className="mt-8 text-center text-sm font-medium text-[var(--text-secondary)]">
           Não tem conta?{' '}
-          <Link to="/cadastro" className="text-[#22a055] font-bold hover:underline">
+          <Link to="/cadastro" className="font-bold hover:underline" style={{ color: 'var(--green-primary)' }}>
             Cadastre-se
           </Link>
         </div>

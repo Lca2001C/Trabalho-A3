@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { CircleDollarSign, ArrowUpRight, ArrowDownRight } from 'lucide-react';
 import api from '../../services/api';
 
-const Sk = ({ className = '' }) => <div className={`animate-pulse bg-gray-200 rounded-lg ${className}`} />;
+const Sk = ({ className = '' }) => <div className={`animate-pulse bg-[var(--bg-tertiary)] rounded-lg ${className}`} />;
 
 export default function OngFinanceView() {
   const [financeTab, setFinanceTab] = useState('visao_geral');
@@ -22,95 +22,101 @@ export default function OngFinanceView() {
 
   return (
     <div className="space-y-6 animate-in fade-in duration-300">
-      <div className="flex justify-between items-center mb-6">
-        <h2 className="text-xl font-bold text-gray-800 flex items-center gap-2">
-          <CircleDollarSign className="w-5 h-5 text-gray-500" /> Financeiro
-        </h2>
+      <div className="flex justify-between items-end mb-2">
+        <div>
+          <h2 className="text-[24px] font-bold" style={{ color: 'var(--text-primary)' }}>Financeiro 💰</h2>
+          <p className="text-[14px] font-medium" style={{ color: 'var(--text-secondary)' }}>Controle de entradas e saídas da sua instituição</p>
+        </div>
       </div>
 
-      <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
-        {/* Tabs */}
-        <div className="flex border-b border-gray-200 mb-6">
-          {[['visao_geral', 'Visão geral'], ['movimentacoes', 'Movimentações']].map(([id, label]) => (
+      <div className="card-base p-0 overflow-hidden">
+        {/* Custom Tabs */}
+        <div className="flex p-2 bg-[var(--bg-tertiary)] rounded-t-xl" style={{ borderBottom: '1px solid var(--border)' }}>
+          {[['visao_geral', 'Visão Geral'], ['movimentacoes', 'Histórico de Movimentações']].map(([id, label]) => (
             <button
               key={id}
               onClick={() => setFinanceTab(id)}
-              className={`pb-3 px-4 text-sm font-medium whitespace-nowrap transition-colors ${
+              className={`px-6 py-2.5 text-[13px] font-bold rounded-lg transition-all ${
                 financeTab === id
-                  ? 'border-b-2 border-green-500 text-green-600'
-                  : 'text-gray-500 hover:text-gray-700'
+                  ? 'bg-[var(--bg-primary)] shadow-sm'
+                  : 'opacity-50 hover:opacity-100'
               }`}
+              style={{ color: financeTab === id ? 'var(--green-primary)' : 'var(--text-secondary)' }}
             >
               {label}
             </button>
           ))}
         </div>
 
-        {financeTab === 'visao_geral' ? (
-          <>
-            {/* KPI Cards */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8 animate-in slide-in-from-left-4">
-              {[
-                { label: 'Total recebido',  key: 'totalRecebido', accent: 'text-green-600' },
-                { label: 'Doações recebidas', key: 'totalDoacoes', accent: 'text-gray-800' },
-                { label: 'Ticket médio',    key: 'ticketMedio',   accent: 'text-gray-800' },
-              ].map(({ label, key, accent }) => (
-                <div key={key} className="bg-gray-50 p-4 rounded-xl border border-gray-100">
-                  <p className="text-xs text-gray-500 mb-1">{label}</p>
-                  {loading
-                    ? <Sk className="h-7 w-3/4 mt-1" />
-                    : <h3 className={`text-lg font-bold ${accent}`}>{kpis?.[key] ?? '—'}</h3>
-                  }
-                </div>
-              ))}
-            </div>
+        <div className="p-8">
+          {financeTab === 'visao_geral' ? (
+            <div className="animate-in slide-in-from-left-4 duration-300">
+              {/* KPI Cards */}
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-10">
+                {[
+                  { label: 'Total Recebido',  key: 'totalRecebido', accent: 'var(--green-text)', bg: 'var(--green-light)', borderColor: 'var(--green-primary)' },
+                  { label: 'Doações Recebidas', key: 'totalDoacoes', accent: 'var(--text-primary)', bg: 'var(--bg-secondary)', borderColor: 'var(--border)' },
+                  { label: 'Ticket Médio',    key: 'ticketMedio',   accent: 'var(--text-primary)', bg: 'var(--bg-secondary)', borderColor: 'var(--border)' },
+                ].map(({ label, key, accent, bg, borderColor }) => (
+                  <div key={key} className="p-6 rounded-2xl border" style={{ backgroundColor: bg, borderColor: borderColor }}>
+                    <p className="text-[12px] font-bold uppercase tracking-wider mb-1" style={{ color: 'var(--text-muted)' }}>{label}</p>
+                    {loading
+                      ? <Sk className="h-8 w-3/4 mt-1" />
+                      : <h3 className="text-[24px] font-bold" style={{ color: accent }}>{kpis?.[key] ?? '—'}</h3>
+                    }
+                  </div>
+                ))}
+              </div>
 
-            {/* Últimas movimentações (top 3) */}
-            <h3 className="text-sm font-semibold text-gray-800 mb-4">Últimas movimentações</h3>
-            <div className="space-y-3">
-              {loading
-                ? Array(3).fill(0).map((_, i) => <Sk key={i} className="h-12 w-full" />)
-                : movimentacoes.length === 0
-                  ? <p className="text-sm text-gray-400 text-center py-4">Nenhuma movimentação financeira ainda.</p>
-                  : movimentacoes.slice(0, 3).map(mov => (
-                    <MovRow key={mov.id} mov={mov} />
-                  ))
-              }
+              {/* Últimas movimentações (top 5) */}
+              <div className="flex justify-between items-center mb-6">
+                <h3 className="text-[16px] font-bold" style={{ color: 'var(--text-primary)' }}>Movimentações Recentes</h3>
+                <button onClick={() => setFinanceTab('movimentacoes')} className="text-[13px] font-bold transition-opacity hover:opacity-70" style={{ color: 'var(--green-primary)' }}>
+                  Ver histórico completo →
+                </button>
+              </div>
+              
+              <div className="space-y-3">
+                {loading
+                  ? Array(3).fill(0).map((_, i) => <Sk key={i} className="h-14 w-full" />)
+                  : movimentacoes.length === 0
+                    ? <p className="text-[14px] text-center py-12" style={{ color: 'var(--text-muted)' }}>Nenhuma movimentação financeira registrada.</p>
+                    : movimentacoes.slice(0, 5).map(mov => (
+                      <MovRow key={mov.id} mov={mov} />
+                    ))
+                }
+              </div>
             </div>
-            <div className="mt-4 flex justify-end">
-              <button onClick={() => setFinanceTab('movimentacoes')} className="text-green-600 text-sm font-medium hover:underline">
-                Ver todas as movimentações
-              </button>
-            </div>
-          </>
-        ) : (
-          <div className="animate-in slide-in-from-right-4">
-            <h3 className="text-sm font-semibold text-gray-800 mb-4">Histórico completo de movimentações</h3>
-            <div className="space-y-2 border border-gray-100 rounded-xl overflow-hidden">
-              {loading
-                ? Array(5).fill(0).map((_, i) => <Sk key={i} className="h-16 w-full" />)
-                : movimentacoes.length === 0
-                  ? <p className="text-sm text-gray-400 text-center py-8">Nenhuma movimentação encontrada.</p>
-                  : movimentacoes.map(mov => (
-                    <div key={mov.id} className="flex justify-between items-center p-4 border-b border-gray-50 last:border-0 hover:bg-gray-50 transition-colors">
-                      <div className="flex items-center gap-4">
-                        <div className={`w-10 h-10 rounded-full flex items-center justify-center ${mov.isIncome ? 'bg-green-100 text-green-600' : 'bg-red-100 text-red-600'}`}>
-                          {mov.isIncome ? <ArrowDownRight className="w-5 h-5" /> : <ArrowUpRight className="w-5 h-5" />}
+          ) : (
+            <div className="animate-in slide-in-from-right-4 duration-300">
+              <h3 className="text-[16px] font-bold mb-6" style={{ color: 'var(--text-primary)' }}>Histórico Completo</h3>
+              <div className="divide-y rounded-2xl border overflow-hidden" style={{ borderColor: 'var(--border)' }}>
+                {loading
+                  ? Array(5).fill(0).map((_, i) => <Sk key={i} className="h-16 w-full" />)
+                  : movimentacoes.length === 0
+                    ? <p className="text-[14px] text-center py-12" style={{ color: 'var(--text-muted)' }}>Nenhuma movimentação encontrada.</p>
+                    : movimentacoes.map(mov => (
+                      <div key={mov.id} className="flex justify-between items-center p-5 hover:bg-[var(--bg-secondary)] transition-colors">
+                        <div className="flex items-center gap-4">
+                          <div className="w-12 h-12 rounded-2xl flex items-center justify-center" 
+                               style={{ backgroundColor: mov.isIncome ? 'var(--green-light)' : 'var(--pink-light)', color: mov.isIncome ? 'var(--green-primary)' : 'var(--coral-text)' }}>
+                            {mov.isIncome ? <ArrowDownRight size={22} /> : <ArrowUpRight size={22} />}
+                          </div>
+                          <div>
+                            <span className="text-[15px] font-bold block" style={{ color: 'var(--text-primary)' }}>{mov.type}</span>
+                            <span className="text-[12px] font-bold uppercase tracking-widest block mt-0.5" style={{ color: 'var(--text-muted)' }}>{mov.date}</span>
+                          </div>
                         </div>
-                        <div>
-                          <span className="text-sm font-medium text-gray-800 block">{mov.type}</span>
-                          <span className="text-xs text-gray-500 block mt-0.5">{mov.date}</span>
-                        </div>
+                        <span className="text-[16px] font-bold" style={{ color: mov.isIncome ? 'var(--green-text)' : 'var(--coral-text)' }}>
+                          {mov.isIncome ? '+' : '-'}{mov.amount}
+                        </span>
                       </div>
-                      <span className={`font-bold ${mov.isIncome ? 'text-green-600' : 'text-red-500'}`}>
-                        {mov.amount}
-                      </span>
-                    </div>
-                  ))
-              }
+                    ))
+                }
+              </div>
             </div>
-          </div>
-        )}
+          )}
+        </div>
       </div>
     </div>
   );
@@ -118,18 +124,21 @@ export default function OngFinanceView() {
 
 function MovRow({ mov }) {
   return (
-    <div className="flex justify-between items-center p-3 hover:bg-gray-50 rounded-lg transition-colors">
-      <div className="flex items-center gap-3">
-        <div className={`w-8 h-8 rounded-full flex items-center justify-center ${mov.isIncome ? 'bg-green-100 text-green-600' : 'bg-red-100 text-red-600'}`}>
-          {mov.isIncome ? <ArrowDownRight className="w-4 h-4" /> : <ArrowUpRight className="w-4 h-4" />}
+    <div className="flex justify-between items-center p-4 hover:bg-[var(--bg-secondary)] rounded-2xl transition-all border" style={{ borderColor: 'var(--border)' }}>
+      <div className="flex items-center gap-4">
+        <div className="w-10 h-10 rounded-xl flex items-center justify-center" 
+             style={{ backgroundColor: mov.isIncome ? 'var(--green-light)' : 'var(--pink-light)', color: mov.isIncome ? 'var(--green-primary)' : 'var(--coral-text)' }}>
+          {mov.isIncome ? <ArrowDownRight size={18} /> : <ArrowUpRight size={18} />}
         </div>
-        <span className="text-sm font-medium text-gray-700">{mov.type}</span>
+        <div>
+          <span className="text-[14px] font-bold block" style={{ color: 'var(--text-primary)' }}>{mov.type}</span>
+          <span className="text-[11px] font-bold uppercase tracking-widest" style={{ color: 'var(--text-muted)' }}>{mov.date}</span>
+        </div>
       </div>
       <div className="flex items-center gap-6">
-        <span className={`text-sm font-medium ${mov.isIncome ? 'text-green-600' : 'text-red-500'}`}>
-          {mov.amount}
+        <span className="text-[14px] font-bold" style={{ color: mov.isIncome ? 'var(--green-text)' : 'var(--coral-text)' }}>
+          {mov.isIncome ? '+' : '-'}{mov.amount}
         </span>
-        <span className="text-xs text-gray-400 w-20 text-right">{mov.date}</span>
       </div>
     </div>
   );
