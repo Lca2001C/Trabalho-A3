@@ -9,6 +9,7 @@ describe('Finance Controller — withdraw', () => {
     req = { user: { id: 1, role: 'INSTITUTION' }, body: {} };
     res = { status: jest.fn().mockReturnThis(), json: jest.fn() };
     jest.clearAllMocks();
+    prismaMock.$transaction.mockImplementation(async (fn) => fn(prismaMock));
   });
 
   it('403 se não for INSTITUTION', async () => {

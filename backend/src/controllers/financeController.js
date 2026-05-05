@@ -26,14 +26,13 @@ async function withdraw(req, res) {
         },
       });
 
-      const saldoReal = agregador._sum.valor || 0;
+      const saldoReal = Number(agregador._sum?.valor ?? 0);
 
       if (saldoReal <= 0 || amount > saldoReal) {
         throw new Error('SALDO_INSUFICIENTE');
       }
 
-      // 2. Cria a transação de débito
-      return await tx.donation.create({
+      await tx.donation.create({
         data: {
           userId: req.user.id,
           institutionId: institutionId,
@@ -43,9 +42,14 @@ async function withdraw(req, res) {
           status: 'entregue',
         }
       });
+
+      return { saldoAtual: saldoReal - amount };
     });
 
-    return res.json({ mensagem: 'Saque realizado com sucesso', saldoAtual: resultado.valor });
+    return res.json({
+      mensagem: 'Saque realizado com sucesso',
+      saldoAtual: resultado.saldoAtual,
+    });
   } catch (error) {
     if (error.message === 'SALDO_INSUFICIENTE') {
       return res.status(400).json({ erro: 'Saldo insuficiente para realizar este saque.' });

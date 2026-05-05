@@ -241,7 +241,7 @@ describe('Donation Controller', () => {
 
   describe('updateDonationStatus', () => {
     it('403 se não for admin', async () => {
-      req.user.tipo = 'doador';
+      req.user.role = 'USER';
       await donationController.updateDonationStatus(req, res);
       expect(res.status).toHaveBeenCalledWith(403);
     });

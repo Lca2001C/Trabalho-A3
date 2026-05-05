@@ -19,5 +19,5 @@ RUN npx prisma generate
 # Expõe a porta do backend
 EXPOSE 3001
 
-# Comando para iniciar (usando node server.js conforme o package.json)
-CMD ["npm", "run", "dev"]
+# Aplica migrações quando o Postgres está vazio (Docker) e inicia a API
+CMD ["sh", "-c", "npx prisma migrate deploy && exec node server.js"]
