@@ -55,22 +55,41 @@ async function redeemReward(req, res) {
     // Código dummy procupom
     const codigoGerado = `CONECTABEM-${Math.random().toString(36).substring(2, 8).toUpperCase()}`;
 
-    // 4. Transação (Resgate + Desconto de Pontos + Atualização de Estoque)
-    await prisma.$transaction(async (tx) => {
-      // Decrementa pontos do usuário
+    // 4. Transação Atômica (Resgate + Desconto de Pontos + Atualização de Estoque)
+    // Garantimos que o saldo e estoque sejam verificados e atualizados sem interferência de outros pedidos simultâneos.
+    const resultado = await prisma.$transaction(async (tx) => {
+      // 4.1 Busca usuário com lock para evitar race condition
+      const userAtual = await tx.user.findUnique({
+        where: { id: userId },
+        select: { pontos: true }
+      });
+
+      if (userAtual.pontos < recompensa.custoPontos) {
+        throw new Error('SALDO_INSUFICIENTE');
+      }
+
+      // 4.2 Busca recompensa com lock e verifica estoque
+      const rewardAtual = await tx.reward.findUnique({
+        where: { id: recompensa.id },
+        select: { estoque: true, ativo: true }
+      });
+
+      if (!rewardAtual || !rewardAtual.ativo) throw new Error('RECOMPENSA_INATIVA');
+      if (rewardAtual.estoque <= 0) throw new Error('SEM_ESTOQUE');
+
+      // 4.3 Executa débitos
       await tx.user.update({
         where: { id: userId },
         data: { pontos: { decrement: recompensa.custoPontos } }
       });
 
-      // Decrementa estoque da recompensa
       await tx.reward.update({
         where: { id: recompensa.id },
         data: { estoque: { decrement: 1 } }
       });
 
-      // Cria registro do resgate com pontosDeduzidos
-      await tx.redemption.create({
+      // 4.4 Cria registro do resgate
+      return await tx.redemption.create({
         data: {
           userId,
           rewardId: recompensa.id,
@@ -87,6 +106,12 @@ async function redeemReward(req, res) {
     });
 
   } catch (error) {
+    if (error.message === 'SALDO_INSUFICIENTE') {
+      return res.status(400).json({ erro: 'Saldo insuficiente para esta transação.' });
+    }
+    if (error.message === 'SEM_ESTOQUE') {
+      return res.status(400).json({ erro: 'Desculpe, o estoque acabou de esgotar.' });
+    }
     console.error('❌ Erro ao resgatar recompensa:', error);
     return res.status(500).json({ erro: 'Erro interno ao processar resgate.' });
   }

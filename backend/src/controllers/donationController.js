@@ -256,7 +256,7 @@ async function getDonationById(req, res) {
   try {
     const donationId = parseInt(req.params.id);
     const userId = req.user.id;
-    const userTipo = req.user.tipo;
+    const userRole = req.user.role;
 
     if (isNaN(donationId)) {
       return res.status(400).json({ erro: 'ID da doação inválido.' });
@@ -285,8 +285,12 @@ async function getDonationById(req, res) {
       return res.status(404).json({ erro: 'Doação não encontrada.' });
     }
 
-    // Apenas o dono da doação ou um admin pode visualizá-la
-    if (doacao.userId !== userId && userTipo !== 'admin') {
+    // Apenas o dono da doação, a instituição destino ou um admin pode visualizá-la
+    const isOwner = doacao.userId === userId;
+    const isTargetInstitution = doacao.institutionId === userId;
+    const isAdmin = userRole === 'ADMIN';
+
+    if (!isOwner && !isTargetInstitution && !isAdmin) {
       return res.status(404).json({ erro: 'Doação não encontrada.' });
     }
 
@@ -358,13 +362,15 @@ async function confirmDonationReceipt(req, res) {
     if (doacao.institutionId !== institutionId) return res.status(403).json({ erro: 'Doação não destinada a sua ong.' });
 
     const doacaoAtualizada = await prisma.$transaction(async (tx) => {
+      // 1. Atualiza status para entregue
       const updated = await tx.donation.update({
         where: { id: donationId },
         data: { status: 'entregue' }
       });
 
-      // Se era um item pendente, credita os pontos agora
-      if (doacao.tipo === 'item' && doacao.status === 'pendente') {
+      // 2. Se for a primeira vez que está sendo confirmada (não era entregue nem aprovada), credita os pontos
+      const statusQueGeraPontos = ['entregue', 'aprovada'];
+      if (!statusQueGeraPontos.includes(doacao.status)) {
         await tx.user.update({
           where: { id: doacao.userId },
           data: {
@@ -404,10 +410,10 @@ async function updateDonationStatus(req, res) {
   try {
     const donationId = parseInt(req.params.id);
     const { status } = req.body;
-    const userTipo = req.user.tipo;
+    const userRole = req.user.role;
 
     // ── Somente admins podem alterar status ──
-    if (userTipo !== 'admin') {
+    if (userRole !== 'ADMIN') {
       return res.status(403).json({
         erro: 'Apenas administradores podem alterar o status de doações.',
       });
@@ -434,20 +440,29 @@ async function updateDonationStatus(req, res) {
       return res.status(404).json({ erro: 'Doação não encontrada.' });
     }
 
-    // ── Atualiza o status e credita pontos se necessário ──
+    // ── Atualiza o status e credita/estorna pontos se necessário ──
     const doacaoAtualizada = await prisma.$transaction(async (tx) => {
       const updated = await tx.donation.update({
         where: { id: donationId },
         data: { status },
       });
 
-      // Se mudou para aprovada e não era antes, credita pontos
-      if (status === 'aprovada' && doacaoExistente.status !== 'aprovada') {
+      const statusPositivos = ['aprovada', 'entregue'];
+      const eraPositivo = statusPositivos.includes(doacaoExistente.status);
+      const agoraEhPositivo = statusPositivos.includes(status);
+
+      // Se mudou de pendente para positivo -> Credita pontos
+      if (!eraPositivo && agoraEhPositivo) {
         await tx.user.update({
           where: { id: doacaoExistente.userId },
-          data: {
-            pontos: { increment: doacaoExistente.pontosGerados }
-          }
+          data: { pontos: { increment: doacaoExistente.pontosGerados } }
+        });
+      } 
+      // Se mudou de positivo para pendente -> Estorna pontos (Prevenção de fraude)
+      else if (eraPositivo && !agoraEhPositivo) {
+        await tx.user.update({
+          where: { id: doacaoExistente.userId },
+          data: { pontos: { decrement: doacaoExistente.pontosGerados } }
         });
       }
 

@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useAuth } from '../contexts/AuthContext';
 import { useNavigate, Link } from 'react-router-dom';
 import { Heart, Building2, ShieldCheck } from 'lucide-react';
 import api from '../services/api'; 
@@ -22,6 +23,7 @@ export default function Cadastro() {
   const [error, setError] = useState('');
 
   const navigate = useNavigate();
+  const { register } = useAuth();
 
   const isInstitution = profileType === 'ong';
 
@@ -85,7 +87,7 @@ export default function Cadastro() {
         })
       };
 
-      const response = await api.post('/api/auth/register', payload);
+      const response = await register(payload);
 
       if (isInstitution) {
         // Fluxo Instituição (Pendente)
@@ -100,8 +102,6 @@ export default function Cadastro() {
         navigate('/login');
       } else {
         // Fluxo Doador Normal (Login Ativo)
-        localStorage.setItem('@ConectaBem:token', response.data.token);
-        localStorage.setItem('@ConectaBem:user', JSON.stringify(response.data.usuario));
         window.location.href = '/dashboard';
       }
     } catch (err) {

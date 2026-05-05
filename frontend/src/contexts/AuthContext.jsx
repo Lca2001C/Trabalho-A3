@@ -79,8 +79,8 @@ export function AuthProvider({ children }) {
 
   // ── Registro ──
   // Cadastra e já faz login automático (a API retorna o token)
-  async function register(nome, email, senha, tipo = 'doador') {
-    const response = await api.post('/api/auth/register', { nome, email, senha, tipo });
+  async function register(data) {
+    const response = await api.post('/api/auth/register', data);
     const { token, usuario } = response.data;
 
     localStorage.setItem('@ConectaBem:token', token);
