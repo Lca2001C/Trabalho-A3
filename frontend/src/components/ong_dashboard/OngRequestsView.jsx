@@ -55,14 +55,14 @@ export default function OngRequestsView() {
 
   return (
     <div className="space-y-6 animate-in fade-in duration-300 relative">
-      <div className="flex justify-between items-end mb-2">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-end gap-4 mb-2">
         <div>
-          <h2 className="text-[24px] font-bold" style={{ color: 'var(--text-primary)' }}>Solicitações de Itens 📦</h2>
-          <p className="text-[14px] font-medium" style={{ color: 'var(--text-secondary)' }}>Gerencie o que sua instituição mais precisa no momento</p>
+          <h2 className="text-[22px] md:text-[24px] font-bold" style={{ color: 'var(--text-primary)' }}>Solicitações de Itens 📦</h2>
+          <p className="text-[13px] md:text-[14px] font-medium" style={{ color: 'var(--text-secondary)' }}>Gerencie o que sua instituição mais precisa no momento</p>
         </div>
         <button
           onClick={() => setIsModalOpen(true)}
-          className="h-[46px] px-6 rounded-xl text-[14px] font-bold text-white shadow-lg shadow-emerald-200 transition-all hover:scale-[1.03] active:scale-[0.98] flex items-center gap-2"
+          className="w-full sm:w-auto h-[46px] px-6 rounded-xl text-[14px] font-bold text-white shadow-lg shadow-emerald-200 transition-all hover:scale-[1.03] active:scale-[0.98] flex items-center justify-center gap-2"
           style={{ backgroundColor: 'var(--green-primary)' }}
         >
           <Plus size={18} strokeWidth={3} /> Nova Solicitação

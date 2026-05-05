@@ -22,21 +22,21 @@ export default function OngFinanceView() {
 
   return (
     <div className="space-y-6 animate-in fade-in duration-300">
-      <div className="flex justify-between items-end mb-2">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-end gap-4 mb-2">
         <div>
-          <h2 className="text-[24px] font-bold" style={{ color: 'var(--text-primary)' }}>Financeiro 💰</h2>
-          <p className="text-[14px] font-medium" style={{ color: 'var(--text-secondary)' }}>Controle de entradas e saídas da sua instituição</p>
+          <h2 className="text-[22px] md:text-[24px] font-bold" style={{ color: 'var(--text-primary)' }}>Financeiro 💰</h2>
+          <p className="text-[13px] md:text-[14px] font-medium" style={{ color: 'var(--text-secondary)' }}>Controle de entradas e saídas da sua instituição</p>
         </div>
       </div>
 
       <div className="card-base p-0 overflow-hidden">
         {/* Custom Tabs */}
-        <div className="flex p-2 bg-[var(--bg-tertiary)] rounded-t-xl" style={{ borderBottom: '1px solid var(--border)' }}>
+        <div className="flex p-1.5 md:p-2 bg-[var(--bg-tertiary)] rounded-t-xl overflow-x-auto no-scrollbar" style={{ borderBottom: '1px solid var(--border)' }}>
           {[['visao_geral', 'Visão Geral'], ['movimentacoes', 'Histórico de Movimentações']].map(([id, label]) => (
             <button
               key={id}
               onClick={() => setFinanceTab(id)}
-              className={`px-6 py-2.5 text-[13px] font-bold rounded-lg transition-all ${
+              className={`px-4 md:px-6 py-2 md:py-2.5 text-[12px] md:text-[13px] font-bold rounded-lg transition-all whitespace-nowrap flex-1 sm:flex-none ${
                 financeTab === id
                   ? 'bg-[var(--bg-primary)] shadow-sm'
                   : 'opacity-50 hover:opacity-100'

@@ -82,15 +82,15 @@ export default function OngProfileView() {
 
   return (
     <div className="space-y-6 animate-in fade-in duration-300 max-w-3xl">
-      <div className="flex justify-between items-end mb-2">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-end gap-4 mb-2">
         <div>
-          <h2 className="text-[24px] font-bold" style={{ color: 'var(--text-primary)' }}>Perfil da ONG 🏢</h2>
-          <p className="text-[14px] font-medium" style={{ color: 'var(--text-secondary)' }}>Mantenha os dados da sua instituição sempre atualizados</p>
+          <h2 className="text-[22px] md:text-[24px] font-bold" style={{ color: 'var(--text-primary)' }}>Perfil da ONG 🏢</h2>
+          <p className="text-[13px] md:text-[14px] font-medium" style={{ color: 'var(--text-secondary)' }}>Mantenha os dados da sua instituição sempre atualizados</p>
         </div>
         {!editMode ? (
           <button
             onClick={() => setEditMode(true)}
-            className="h-[46px] px-6 rounded-xl text-[14px] font-bold text-white shadow-lg shadow-emerald-200 transition-all hover:scale-[1.03] active:scale-[0.98] flex items-center gap-2"
+            className="w-full sm:w-auto h-[46px] px-6 rounded-xl text-[14px] font-bold text-white shadow-lg shadow-emerald-200 transition-all hover:scale-[1.03] active:scale-[0.98] flex items-center justify-center gap-2"
             style={{ backgroundColor: 'var(--green-primary)' }}
           >
             <Pencil size={18} /> Editar Perfil
@@ -98,7 +98,7 @@ export default function OngProfileView() {
         ) : (
           <button
             onClick={handleCancel}
-            className="h-[46px] px-6 rounded-xl text-[14px] font-bold transition-all hover:bg-[rgba(0,0,0,0.05)] flex items-center gap-2"
+            className="w-full sm:w-auto h-[46px] px-6 rounded-xl text-[14px] font-bold transition-all hover:bg-[rgba(0,0,0,0.05)] flex items-center justify-center gap-2"
             style={{ backgroundColor: 'var(--bg-tertiary)', color: 'var(--text-secondary)' }}
           >
             <X size={18} /> Cancelar
@@ -106,7 +106,7 @@ export default function OngProfileView() {
         )}
       </div>
 
-      <div className="card-base p-8">
+      <div className="card-base p-5 md:p-8">
         <form onSubmit={handleSave} className="space-y-8">
           {/* Feedback banner */}
           {feedback && (

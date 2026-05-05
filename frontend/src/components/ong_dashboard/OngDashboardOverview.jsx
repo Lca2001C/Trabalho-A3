@@ -100,24 +100,24 @@ export default function OngDashboardOverview({ setActiveTab }) {
   };
 
   return (
-    <div className="space-y-6 animate-in fade-in duration-300 relative">
-      <div className="flex justify-between items-center mb-6">
-        <h2 className="text-[20px] font-bold" style={{ color: 'var(--text-primary)' }}>Visão Geral 📊</h2>
+    <div className="space-y-4 md:space-y-6 animate-in fade-in duration-300 relative">
+      <div className="flex justify-between items-center mb-2 md:mb-6">
+        <h2 className="text-[18px] md:text-[20px] font-bold" style={{ color: 'var(--text-primary)' }}>Visão Geral 📊</h2>
       </div>
 
       {/* KPI Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <div className="card-base p-6 flex flex-col gap-1" style={{ backgroundColor: 'var(--green-light)', borderColor: 'var(--green-primary)', borderWidth: '1px' }}>
-          <p className="text-[12px] font-bold uppercase tracking-wider" style={{ color: 'var(--green-dark)' }}>Saldo em Conta</p>
-          {loading ? <Sk className="h-8 w-3/4" /> : <h3 className="text-[28px] font-bold" style={{ color: 'var(--green-text)' }}>{stats?.totalDinheiro}</h3>}
+      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 md:gap-6">
+        <div className="card-base p-5 md:p-6 flex flex-col gap-1" style={{ backgroundColor: 'var(--green-light)', borderColor: 'var(--green-primary)', borderWidth: '1px' }}>
+          <p className="text-[10px] md:text-[12px] font-bold uppercase tracking-wider" style={{ color: 'var(--green-dark)' }}>Saldo em Conta</p>
+          {loading ? <Sk className="h-8 w-3/4" /> : <h3 className="text-[24px] md:text-[28px] font-bold" style={{ color: 'var(--green-text)' }}>{stats?.totalDinheiro}</h3>}
         </div>
-        <div className="card-base p-6 flex flex-col gap-1">
-          <p className="text-[12px] font-bold uppercase tracking-wider" style={{ color: 'var(--text-secondary)' }}>Total Doações</p>
-          {loading ? <Sk className="h-8 w-1/2" /> : <h3 className="text-[28px] font-bold" style={{ color: 'var(--text-primary)' }}>{stats?.totalDoacoes}</h3>}
+        <div className="card-base p-5 md:p-6 flex flex-col gap-1">
+          <p className="text-[10px] md:text-[12px] font-bold uppercase tracking-wider" style={{ color: 'var(--text-secondary)' }}>Total Doações</p>
+          {loading ? <Sk className="h-8 w-1/2" /> : <h3 className="text-[24px] md:text-[28px] font-bold" style={{ color: 'var(--text-primary)' }}>{stats?.totalDoacoes}</h3>}
         </div>
-        <div className="card-base p-6 flex flex-col gap-1">
-          <p className="text-[12px] font-bold uppercase tracking-wider" style={{ color: 'var(--text-secondary)' }}>Doadores Únicos</p>
-          {loading ? <Sk className="h-8 w-1/2" /> : <h3 className="text-[28px] font-bold" style={{ color: 'var(--text-primary)' }}>{stats?.doadores}</h3>}
+        <div className="card-base p-5 md:p-6 flex flex-col gap-1 sm:col-span-2 md:col-span-1">
+          <p className="text-[10px] md:text-[12px] font-bold uppercase tracking-wider" style={{ color: 'var(--text-secondary)' }}>Doadores Únicos</p>
+          {loading ? <Sk className="h-8 w-1/2" /> : <h3 className="text-[24px] md:text-[28px] font-bold" style={{ color: 'var(--text-primary)' }}>{stats?.doadores}</h3>}
         </div>
       </div>
 

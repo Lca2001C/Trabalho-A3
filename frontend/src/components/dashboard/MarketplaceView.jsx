@@ -321,7 +321,7 @@ export default function MarketplaceView({ cupons, usuario, refreshUser }) {
 
       {/* GRID DE PRODUTOS */}
       {filteredProducts.length > 0 ? (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 justify-items-center sm:justify-items-stretch">
           {filteredProducts.map((p, idx) => {
             const isLocked = p.nivelMinimo && userLevel === 'Bronze' && p.nivelMinimo !== 'Bronze';
             const canAfford = activeTab === 'pontos' ? user?.pontos >= p.custo : true;
@@ -330,7 +330,7 @@ export default function MarketplaceView({ cupons, usuario, refreshUser }) {
               <div 
                 key={p.id}
                 onClick={() => !isLocked && setSelectedProduct(p)}
-                className="card-base group overflow-hidden cursor-pointer flex flex-col hover:shadow-lg transition-all"
+                className="card-base group overflow-hidden cursor-pointer flex flex-col hover:shadow-lg transition-all w-full max-w-[340px] sm:max-w-none"
                 style={{ 
                   animation: `fadeIn 0.2s ease-out forwards ${idx * 40}ms`,
                   opacity: 0,

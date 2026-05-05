@@ -46,8 +46,15 @@ export default function Dashboard() {
   const [currentView, setCurrentView] = useState('dashboard');
   const [myPosition, setMyPosition] = useState('--');
   const [formData, setFormData] = useState(INITIAL_FORM);
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
-  const navigateTo = useCallback((view) => setCurrentView(view), []);
+  const navigateTo = useCallback((view) => {
+    setCurrentView(view);
+    setIsSidebarOpen(false);
+  }, []);
+
+  const toggleSidebar = () => setIsSidebarOpen(!isSidebarOpen);
+  const closeSidebar = () => setIsSidebarOpen(false);
 
   const handleDonationSuccess = useCallback(() => {
     setFormData(INITIAL_FORM);
@@ -99,132 +106,136 @@ export default function Dashboard() {
   }
 
   return (
-    <div className="flex min-h-screen w-full bg-[var(--bg-secondary)] overflow-x-hidden">
+    <div className="flex min-h-screen w-full bg-[var(--bg-secondary)] overflow-x-hidden relative">
       
-      {/* Sidebar Redesenhada */}
+      {/* Sidebar Redesenhada com suporte mobile */}
       <Sidebar 
         currentView={currentView} 
         onViewChange={navigateTo} 
-        onLogout={logout} 
+        onLogout={logout}
+        isOpen={isSidebarOpen}
+        onClose={closeSidebar}
       />
 
       {/* Área de Conteúdo Principal */}
-      <div className="flex-1 flex flex-col md:ml-[210px] transition-all duration-300">
+      <div className="flex-1 flex flex-col md:ml-[210px] transition-all duration-300 min-w-0">
         
         {/* Topbar Redesenhada */}
         <Topbar 
           usuario={usuario} 
           onNewDonation={() => navigateTo('donate_type')} 
           onProfileClick={() => navigateTo('profile')}
+          onToggleMenu={toggleSidebar}
         />
 
         {/* Views Dinâmicas */}
-        <main className="px-8 pb-10">
-          
-          {currentView === 'dashboard' && (
-            <DashboardOverviewV2
-              usuario={usuario}
-              doacoes={doacoes}
-              cupons={cupons}
-              myPosition={myPosition}
-              onNewDonation={() => navigateTo('donate_type')}
-              onViewRanking={() => navigateTo('ranking')}
-              onViewAllDonations={() => navigateTo('donations')}
-              navigateTo={navigateTo}
-            />
-          )}
+        <main className="px-4 sm:px-8 pb-10">
+          <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
+            {currentView === 'dashboard' && (
+              <DashboardOverviewV2
+                usuario={usuario}
+                doacoes={doacoes}
+                cupons={cupons}
+                myPosition={myPosition}
+                onNewDonation={() => navigateTo('donate_type')}
+                onViewRanking={() => navigateTo('ranking')}
+                onViewAllDonations={() => navigateTo('donations')}
+                navigateTo={navigateTo}
+              />
+            )}
 
-          {currentView === 'profile' && (
-            <ProfileView 
-              usuario={usuario} 
-              onUpdate={refreshUser} 
-            />
-          )}
+            {currentView === 'profile' && (
+              <ProfileView 
+                usuario={usuario} 
+                onUpdate={refreshUser} 
+              />
+            )}
 
-          {/* ── Wizard de Doação (Pode ser melhorado visualmente depois) ── */}
-          {currentView === 'donate_type' && (
-            <div className="max-w-3xl mx-auto pt-6">
-              <DonateTypeView
-                onBack={() => navigateTo('dashboard')}
-                onSelectItems={() => navigateTo('donate_details')}
-                onSelectFinancial={() => navigateTo('financial_value')}
-              />
-            </div>
-          )}
-          {currentView === 'donate_details' && (
-            <div className="max-w-3xl mx-auto pt-6">
-              <DonateDetailsView
-                onBack={() => navigateTo('donate_type')}
-                onNext={() => navigateTo('donate_pickup')}
-                formData={formData}
-                setFormData={setFormData}
-              />
-            </div>
-          )}
-          {currentView === 'donate_pickup' && (
-            <div className="max-w-3xl mx-auto pt-6">
-              <DonatePickupView
-                onBack={() => navigateTo('donate_details')}
-                onNext={() => navigateTo('donate_review')}
-                formData={formData}
-                setFormData={setFormData}
-              />
-            </div>
-          )}
-          {currentView === 'donate_review' && (
-            <div className="max-w-3xl mx-auto pt-6">
-              <DonateReviewView
-                onBack={() => navigateTo('donate_pickup')}
-                onConfirm={() => {
-                  const cepLimpo = formData.cep ? formData.cep.replace(/\D/g, '') : '';
-                  itemSubmit.submitDonation({
-                    tipo: 'item',
-                    item: `${formData.categoria}: ${formData.descricao} (CEP: ${cepLimpo}, Endereço: ${formData.endereco})`,
-                    ...(formData.institutionId && { institutionId: formData.institutionId }),
-                  });
-                }}
-                formData={formData}
-                submitting={itemSubmit.submitting}
-                feedback={itemSubmit.feedback}
-              />
-            </div>
-          )}
+            {/* ── Wizard de Doação ── */}
+            {currentView === 'donate_type' && (
+              <div className="max-w-3xl mx-auto pt-6">
+                <DonateTypeView
+                  onBack={() => navigateTo('dashboard')}
+                  onSelectItems={() => navigateTo('donate_details')}
+                  onSelectFinancial={() => navigateTo('financial_value')}
+                />
+              </div>
+            )}
+            {currentView === 'donate_details' && (
+              <div className="max-w-3xl mx-auto pt-6">
+                <DonateDetailsView
+                  onBack={() => navigateTo('donate_type')}
+                  onNext={() => navigateTo('donate_pickup')}
+                  formData={formData}
+                  setFormData={setFormData}
+                />
+              </div>
+            )}
+            {currentView === 'donate_pickup' && (
+              <div className="max-w-3xl mx-auto pt-6">
+                <DonatePickupView
+                  onBack={() => navigateTo('donate_details')}
+                  onNext={() => navigateTo('donate_review')}
+                  formData={formData}
+                  setFormData={setFormData}
+                />
+              </div>
+            )}
+            {currentView === 'donate_review' && (
+              <div className="max-w-3xl mx-auto pt-6">
+                <DonateReviewView
+                  onBack={() => navigateTo('donate_pickup')}
+                  onConfirm={() => {
+                    const cepLimpo = formData.cep ? formData.cep.replace(/\D/g, '') : '';
+                    itemSubmit.submitDonation({
+                      tipo: 'item',
+                      item: `${formData.categoria}: ${formData.descricao} (CEP: ${cepLimpo}, Endereço: ${formData.endereco})`,
+                      ...(formData.institutionId && { institutionId: formData.institutionId }),
+                    });
+                  }}
+                  formData={formData}
+                  submitting={itemSubmit.submitting}
+                  feedback={itemSubmit.feedback}
+                />
+              </div>
+            )}
 
-          {/* ── Wizard Financeiro ── */}
-          {currentView === 'financial_value' && (
-            <div className="max-w-3xl mx-auto pt-6">
-              <FinancialDonateValueView
-                onBack={() => navigateTo('donate_type')}
-                onNext={() => navigateTo('financial_payment')}
-                formData={formData}
-                setFormData={setFormData}
-              />
-            </div>
-          )}
-          {currentView === 'financial_payment' && (
-            <div className="max-w-3xl mx-auto pt-6">
-              <FinancialDonatePaymentView
-                onBack={() => navigateTo('financial_value')}
-                onConfirm={() =>
-                  financialSubmit.submitDonation({
-                    tipo: 'financeira',
-                    valor: formData.valor,
-                    ...(formData.institutionId && { institutionId: formData.institutionId }),
-                  })
-                }
-                formData={formData}
-                setFormData={setFormData}
-                submitting={financialSubmit.submitting}
-                feedback={financialSubmit.feedback}
-              />
-            </div>
-          )}
+            {/* ── Wizard Financeiro ── */}
+            {currentView === 'financial_value' && (
+              <div className="max-w-3xl mx-auto pt-6">
+                <FinancialDonateValueView
+                  onBack={() => navigateTo('donate_type')}
+                  onNext={() => navigateTo('financial_payment')}
+                  formData={formData}
+                  setFormData={setFormData}
+                />
+              </div>
+            )}
+            {currentView === 'financial_payment' && (
+              <div className="max-w-3xl mx-auto pt-6">
+                <FinancialDonatePaymentView
+                  onBack={() => navigateTo('financial_value')}
+                  onConfirm={() =>
+                    financialSubmit.submitDonation({
+                      tipo: 'financeira',
+                      valor: formData.valor,
+                      ...(formData.institutionId && { institutionId: formData.institutionId }),
+                    })
+                  }
+                  formData={formData}
+                  setFormData={setFormData}
+                  submitting={financialSubmit.submitting}
+                  feedback={financialSubmit.feedback}
+                />
+              </div>
+            )}
 
-          {/* ── Outras Views ── */}
-          {currentView === 'marketplace' && <MarketplaceView cupons={cupons} usuario={usuario} refreshUser={refreshUser} />}
-          {currentView === 'ranking' && <RankingView />}
-          {currentView === 'donations' && <DonationsView doacoes={doacoes} />}
-          {currentView === 'receipts' && <ReceiptsView doacoes={doacoes} />}
+            {/* ── Outras Views ── */}
+            {currentView === 'marketplace' && <MarketplaceView cupons={cupons} usuario={usuario} refreshUser={refreshUser} />}
+            {currentView === 'ranking' && <RankingView />}
+            {currentView === 'donations' && <DonationsView doacoes={doacoes} />}
+            {currentView === 'receipts' && <ReceiptsView doacoes={doacoes} />}
+          </div>
         </main>
       </div>
     </div>

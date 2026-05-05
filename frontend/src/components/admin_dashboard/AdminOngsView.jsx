@@ -223,28 +223,28 @@ export default function AdminOngsView({ selectedONG, setSelectedONG }) {
           <p className="text-[14px]" style={{ color: 'var(--text-muted)' }}>Nenhuma ONG nesta categoria.</p>
         </div>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 justify-items-center md:justify-items-stretch">
           {filteredOngs.map((ong) => (
             <div
               key={ong.id}
               onClick={() => setSelectedONG(ong)}
-              className="card-base p-5 flex items-center justify-between hover:scale-[1.01] transition-all cursor-pointer group"
+              className="card-base p-6 flex flex-col sm:flex-row items-center sm:justify-between hover:scale-[1.01] transition-all cursor-pointer group w-full max-w-[400px] md:max-w-none"
             >
-              <div className="flex items-center gap-4">
-                <div className="w-12 h-12 rounded-xl flex items-center justify-center text-lg font-bold text-white transition-transform group-hover:rotate-6"
+              <div className="flex flex-col sm:flex-row items-center gap-4 text-center sm:text-left">
+                <div className="w-14 h-14 rounded-xl flex items-center justify-center text-xl font-bold text-white transition-transform group-hover:rotate-6 shadow-sm"
                      style={{ backgroundColor: 'var(--green-primary)' }}>
                   {ong.nome?.charAt(0)}
                 </div>
                 <div>
-                  <h4 className="text-[14px] font-medium" style={{ color: 'var(--text-primary)' }}>{ong.nome}</h4>
-                  <p className="text-[11px] font-bold opacity-60 uppercase" style={{ color: 'var(--text-muted)' }}>
+                  <h4 className="text-[16px] font-bold" style={{ color: 'var(--text-primary)' }}>{ong.nome}</h4>
+                  <p className="text-[11px] font-bold opacity-60 uppercase tracking-widest mt-0.5" style={{ color: 'var(--text-muted)' }}>
                     CNPJ: {ong.cnpj || 'PENDENTE'}
                   </p>
                 </div>
               </div>
               
-              <div className="p-2 rounded-full hover:bg-[var(--bg-secondary)] transition-colors">
-                <ArrowLeft size={16} className="rotate-180" style={{ color: 'var(--text-muted)' }} />
+              <div className="mt-4 sm:mt-0 p-2 rounded-full bg-[var(--bg-secondary)] sm:bg-transparent group-hover:bg-[var(--bg-secondary)] transition-colors">
+                <ArrowLeft size={18} className="rotate-180 opacity-40 sm:opacity-100" style={{ color: 'var(--text-muted)' }} />
               </div>
             </div>
           ))}

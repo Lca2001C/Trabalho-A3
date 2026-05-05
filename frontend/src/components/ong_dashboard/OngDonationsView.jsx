@@ -99,7 +99,8 @@ export default function OngDonationsView() {
           </div>
         </div>
 
-        <div className="overflow-x-auto">
+        {/* View para Desktop (Tabela) */}
+        <div className="hidden md:block overflow-x-auto">
           <table className="w-full text-left border-collapse">
             <thead>
               <tr className="border-b" style={{ borderColor: 'var(--border)' }}>
@@ -162,12 +163,68 @@ export default function OngDonationsView() {
               ) : (
                 <tr>
                   <td colSpan="6" className="py-12 text-center">
-                    <p className="text-[14px] font-medium" style={{ color: 'var(--text-muted)' }}>Nenhuma doação encontrada para estes filtros.</p>
+                    <p className="text-[14px] font-medium" style={{ color: 'var(--text-muted)' }}>Nenhuma doação encontrada.</p>
                   </td>
                 </tr>
               )}
             </tbody>
           </table>
+        </div>
+
+        {/* View para Mobile (Cards) */}
+        <div className="md:hidden">
+          {loading ? (
+            <div className="p-6 space-y-4">
+              {Array(3).fill(0).map((_, i) => <div key={i} className="h-24 w-full bg-[var(--bg-tertiary)] animate-pulse rounded-xl" />)}
+            </div>
+          ) : filteredDonations.length > 0 ? (
+            <div className="divide-y divide-[var(--border)]">
+              {filteredDonations.map(donation => (
+                <div key={donation.id} className="p-4 space-y-3">
+                  <div className="flex justify-between items-start">
+                    <div className="flex flex-col">
+                      <span className="text-[11px] font-bold text-[var(--text-muted)] uppercase tracking-wider">Doador</span>
+                      <span className="text-[14px] font-bold" style={{ color: 'var(--text-primary)' }}>{donation.user?.nome || 'Anônimo'}</span>
+                    </div>
+                    <div className="flex items-center gap-2 px-2 py-1 rounded-lg bg-[var(--bg-tertiary)]">
+                      {donation.tipo === 'financeira' ? <QrCode size={12} /> : <Package size={12} />}
+                      <span className="text-[10px] font-bold uppercase" style={{ color: 'var(--text-secondary)' }}>{donation.tipo}</span>
+                    </div>
+                  </div>
+                  
+                  <div className="flex justify-between items-end">
+                    <div className="flex flex-col">
+                      <span className="text-[11px] font-bold text-[var(--text-muted)] uppercase tracking-wider">Conteúdo</span>
+                      <span className="text-[15px] font-bold" style={{ color: donation.tipo === 'financeira' ? 'var(--green-text)' : 'var(--text-primary)' }}>
+                        {donation.tipo === 'financeira' ? formatCurrency(donation.valor) : donation.item}
+                      </span>
+                    </div>
+                    <div className="flex flex-col items-end">
+                      <span className="text-[10px] font-bold text-[var(--text-muted)] uppercase mb-1">{new Date(donation.criadoEm).toLocaleDateString('pt-BR')}</span>
+                      <div className="flex items-center gap-1.5">
+                        <div className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: donation.status === 'entregue' ? 'var(--green-primary)' : 'var(--amber-text)' }} />
+                        <span className="text-[12px] font-bold" style={{ color: donation.status === 'entregue' ? 'var(--green-text)' : 'var(--amber-text)' }}>
+                          {donation.status === 'entregue' ? 'Concluído' : 'Pendente'}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+
+                  {donation.status === 'pendente' && donation.tipo === 'item' && (
+                    <button 
+                      onClick={() => handleConfirmReceipt(donation.id)}
+                      className="w-full py-2.5 rounded-xl text-[12px] font-bold text-white shadow-sm transition-all active:scale-95 mt-2"
+                      style={{ backgroundColor: 'var(--green-primary)' }}
+                    >
+                      Confirmar Recebimento
+                    </button>
+                  )}
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="p-12 text-center text-[14px] font-medium text-[var(--text-muted)]">Nenhuma doação encontrada.</div>
+          )}
         </div>
       </div>
     </div>

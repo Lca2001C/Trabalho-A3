@@ -1,8 +1,8 @@
 import React from 'react';
 import { useTheme } from '../../contexts/ThemeContext';
-import { Sun, Moon, DollarSign } from 'lucide-react';
+import { Sun, Moon, DollarSign, Home, Menu } from 'lucide-react';
 
-export default function OngTopbar({ usuario, onWithdraw, onProfileClick }) {
+export default function OngTopbar({ usuario, onWithdraw, onProfileClick, onToggleMenu }) {
   const { theme, toggleTheme } = useTheme();
 
   const getIniciais = (nome) => {
@@ -13,20 +13,43 @@ export default function OngTopbar({ usuario, onWithdraw, onProfileClick }) {
   };
 
   return (
-    <header className="flex items-center justify-between py-6 px-8 bg-transparent">
+    <header className="flex items-center justify-between py-4 md:py-6 px-4 md:px-8 bg-transparent">
       {/* Saudação / Título */}
-      <div className="flex flex-col">
-        <h1 className="text-[24px] font-bold leading-tight flex items-center gap-2" style={{ color: 'var(--text-primary)' }}>
-          Instituição: {usuario?.nome || 'ONG'} 🏢
-        </h1>
-        <p className="text-[14px] font-medium mt-1" style={{ color: 'var(--text-secondary)' }}>
-          Painel Administrativo da ONG
-        </p>
+      <div className="flex items-center gap-3">
+        <button 
+          onClick={onToggleMenu}
+          className="md:hidden p-2 rounded-xl border transition-all"
+          style={{ backgroundColor: 'var(--bg-secondary)', borderColor: 'var(--border)', color: 'var(--text-primary)' }}
+        >
+          <Menu size={20} />
+        </button>
+        <div className="flex flex-col">
+          <h1 className="text-[18px] md:text-[24px] font-bold leading-tight flex items-center gap-2" style={{ color: 'var(--text-primary)' }}>
+            <span className="hidden sm:inline">Instituição:</span> {usuario?.nome || 'ONG'} 🏢
+          </h1>
+          <p className="text-[11px] md:text-[14px] font-medium mt-0.5" style={{ color: 'var(--text-secondary)' }}>
+            Painel Administrativo
+          </p>
+        </div>
       </div>
 
       {/* Ações */}
       <div className="flex items-center gap-5">
         
+        {/* Botão Home */}
+        <a 
+          href="/"
+          className="w-[38px] h-[38px] rounded-full flex items-center justify-center border transition-all duration-300 hover:bg-[var(--bg-tertiary)]"
+          title="Ir para Página Inicial"
+          style={{ 
+            backgroundColor: 'var(--bg-secondary)', 
+            borderColor: 'var(--border)',
+            color: 'var(--text-secondary)'
+          }}
+        >
+          <Home size={18} />
+        </a>
+
         {/* Toggle Tema */}
         <button 
           onClick={toggleTheme}
@@ -42,7 +65,7 @@ export default function OngTopbar({ usuario, onWithdraw, onProfileClick }) {
         {/* Botão Sacar */}
         <button
           onClick={onWithdraw}
-          className="flex items-center gap-2 px-5 py-2.5 rounded-xl text-[14px] font-bold text-white transition-transform hover:scale-[1.03] active:scale-[0.98] shadow-md shadow-emerald-200"
+          className="hidden sm:flex items-center gap-2 px-5 py-2.5 rounded-xl text-[14px] font-bold text-white transition-transform hover:scale-[1.03] active:scale-[0.98] shadow-md shadow-emerald-200"
           style={{ backgroundColor: 'var(--green-primary)' }}
         >
           <DollarSign size={18} strokeWidth={3} />
