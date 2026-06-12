@@ -14,6 +14,15 @@ const helmet = require('helmet');
 const rateLimit = require('express-rate-limit');
 require('dotenv').config();
 
+// ─── Validação de variáveis de ambiente críticas (fail-fast) ────────────────
+// Sem JWT_SECRET os tokens seriam assinados com `undefined` — falha silenciosa
+// e gravíssima de segurança. Melhor recusar o boot com mensagem clara.
+if (!process.env.JWT_SECRET) {
+  console.error('❌ ERRO FATAL: JWT_SECRET não definido no arquivo .env');
+  console.error('   Adicione em backend/.env:  JWT_SECRET="uma_frase_longa_e_aleatoria"');
+  process.exit(1);
+}
+
 const app = express();
 
 // ─── Middlewares globais ────────────────────────────────────────────────────
@@ -39,6 +48,18 @@ const limiter = rateLimit({
 
 // Aplica o limite globalmente (pode ser ajustado para ser mais rígido em rotas de auth)
 app.use('/api/', limiter);
+
+// Rate Limiting rígido para autenticação — mitiga brute force de senhas.
+// Conta apenas tentativas que falham (skipSuccessfulRequests), então usuários
+// legítimos que acertam a senha não são bloqueados.
+const authLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutos
+  max: 10,                  // 10 tentativas falhas por IP por janela
+  skipSuccessfulRequests: true,
+  message: { erro: 'Muitas tentativas de login. Tente novamente em 15 minutos.' },
+});
+app.use('/api/auth/login', authLimiter);
+app.use('/api/auth/register', authLimiter);
 
 // Parse de JSON no body das requisições (limite de 10 MB para uploads base64)
 app.use(express.json({ limit: '10mb' }));
@@ -77,6 +98,11 @@ app.use('/api/finance', financeRoutes);
 // const reportRoutes = require('./src/routes/reports');
 // app.use('/api/reports', reportRoutes);
 
+// ─── Handler 404 ────────────────────────────────────────────────────────────
+app.use((_req, res) => {
+  res.status(404).json({ erro: 'Rota não encontrada.' });
+});
+
 // ─── Middleware de tratamento de erros global ───────────────────────────────
 // Captura erros não tratados nos controllers e retorna uma resposta padronizada.
 // eslint-disable-next-line no-unused-vars
@@ -94,11 +120,20 @@ app.use((err, _req, res, _next) => {
 
 const PORT = process.env.PORT || 3001;
 
-app.listen(PORT, () => {
+const server = app.listen(PORT, () => {
   console.log(`\n🚀 ConectaBem API rodando em http://localhost:${PORT}`);
   console.log(`📋 Health check:      http://localhost:${PORT}/api/health`);
   console.log(`🔐 Autenticação:      http://localhost:${PORT}/api/auth`);
   console.log(`📦 Doações:           http://localhost:${PORT}/api/donations\n`);
+});
+
+server.on('error', (err) => {
+  if (err.code === 'EADDRINUSE') {
+    console.error(`❌ A porta ${PORT} já está em uso. Encerre o outro processo ou mude a variável PORT no .env.`);
+  } else {
+    console.error('❌ Erro ao iniciar o servidor:', err.message);
+  }
+  process.exit(1);
 });
 
 module.exports = app; // Exporta para testes automatizados

@@ -133,11 +133,20 @@ describe('Request Controller', () => {
     it('ADMIN pode atualizar qualquer solicitação', async () => {
       req.user = { id: 1, role: 'ADMIN' };
       req.params.id = '5';
-      req.body = { status: 'Cancelado' };
+      req.body = { status: 'Pendente' };
       prismaMock.request.findUnique.mockResolvedValue({ id: 5, institutionId: 99 });
-      prismaMock.request.update.mockResolvedValue({ id: 5, status: 'Cancelado' });
+      prismaMock.request.update.mockResolvedValue({ id: 5, status: 'Pendente' });
       await requestController.updateRequestStatus(req, res);
-      expect(res.json).toHaveBeenCalledWith({ mensagem: 'Status atualizado.', status: 'Cancelado' });
+      expect(res.json).toHaveBeenCalledWith({ mensagem: 'Status atualizado.', status: 'Pendente' });
+    });
+
+    it('400 se status fora da lista permitida', async () => {
+      req.user = { id: 1, role: 'ADMIN' };
+      req.params.id = '5';
+      req.body = { status: 'Cancelado' };
+      await requestController.updateRequestStatus(req, res);
+      expect(res.status).toHaveBeenCalledWith(400);
+      expect(res.json).toHaveBeenCalledWith({ erro: 'Status inválido. Use: Pendente, Atendido.' });
     });
 
     it('retorna 500 em erro', async () => {

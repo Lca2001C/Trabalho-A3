@@ -3,6 +3,7 @@
 // ============================================================================
 
 const prisma = require('../lib/prisma');
+const crypto = require('crypto');
 
 // ─── Listar Recompensas ─────────────────────────────────────────────────────
 async function listRewards(req, res) {
@@ -23,13 +24,14 @@ async function redeemReward(req, res) {
     const userId = req.user.id;
     const { rewardId } = req.body;
 
-    if (!rewardId) {
-      return res.status(400).json({ erro: 'O ID da recompensa é obrigatório.' });
+    const rewardIdNum = parseInt(rewardId);
+    if (!rewardId || isNaN(rewardIdNum)) {
+      return res.status(400).json({ erro: 'O ID da recompensa é obrigatório e deve ser numérico.' });
     }
 
     // 1. Busca custo em pontos da recompensa
     const recompensa = await prisma.reward.findUnique({
-      where: { id: parseInt(rewardId) }
+      where: { id: rewardIdNum }
     });
 
     if (!recompensa || !recompensa.ativo) {
@@ -52,11 +54,10 @@ async function redeemReward(req, res) {
       });
     }
 
-    // Código dummy procupom
-    const codigoGerado = `CONECTABEM-${Math.random().toString(36).substring(2, 8).toUpperCase()}`;
+    // Código criptograficamente seguro (não previsível como Math.random)
+    const codigoGerado = `CONECTABEM-${crypto.randomBytes(4).toString('hex').toUpperCase()}`;
 
     // 4. Transação Atômica (Resgate + Desconto de Pontos + Atualização de Estoque)
-    // Garantimos que o saldo e estoque sejam verificados e atualizados sem interferência de outros pedidos simultâneos.
     const resultado = await prisma.$transaction(async (tx) => {
       // 4.1 Busca usuário com lock para evitar race condition
       const userAtual = await tx.user.findUnique({
@@ -78,9 +79,10 @@ async function redeemReward(req, res) {
       if (rewardAtual.estoque <= 0) throw new Error('SEM_ESTOQUE');
 
       // 4.3 Executa débitos
-      await tx.user.update({
+      const userAtualizado = await tx.user.update({
         where: { id: userId },
-        data: { pontos: { decrement: recompensa.custoPontos } }
+        data: { pontos: { decrement: recompensa.custoPontos } },
+        select: { pontos: true }
       });
 
       await tx.reward.update({
@@ -89,7 +91,7 @@ async function redeemReward(req, res) {
       });
 
       // 4.4 Cria registro do resgate
-      return await tx.redemption.create({
+      const redemption = await tx.redemption.create({
         data: {
           userId,
           rewardId: recompensa.id,
@@ -97,12 +99,15 @@ async function redeemReward(req, res) {
           codigo: codigoGerado
         }
       });
+
+      // Retorna pontos reais pós-transação (sem race condition)
+      return { redemption, pontosRestantes: userAtualizado.pontos };
     });
 
     return res.status(200).json({
       mensagem: 'Resgate realizado com sucesso!',
       codigo: codigoGerado,
-      pontosRestantes: usuario.pontos - recompensa.custoPontos
+      pontosRestantes: resultado.pontosRestantes
     });
 
   } catch (error) {
@@ -111,6 +116,9 @@ async function redeemReward(req, res) {
     }
     if (error.message === 'SEM_ESTOQUE') {
       return res.status(400).json({ erro: 'Desculpe, o estoque acabou de esgotar.' });
+    }
+    if (error.message === 'RECOMPENSA_INATIVA') {
+      return res.status(404).json({ erro: 'Recompensa indisponível. Tente novamente.' });
     }
     console.error('❌ Erro ao resgatar recompensa:', error);
     return res.status(500).json({ erro: 'Erro interno ao processar resgate.' });

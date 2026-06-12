@@ -44,7 +44,8 @@ export default function AdminMarketplaceView() {
   const fetchRewards = async () => {
     try {
       setLoading(true);
-      const res = await api.get('/api/rewards');
+      // Rota admin: retorna TODOS os produtos, inclusive os desativados (ativo=false)
+      const res = await api.get('/api/admin/rewards');
       setRewards(res.data);
     } catch (err) {
       console.error('Erro ao buscar recompensas:', err);

@@ -76,17 +76,26 @@ async function createRequest(req, res) {
 // PATCH /api/requests/:id — Atualiza status (ex: marcar como Atendido)
 async function updateRequestStatus(req, res) {
   try {
-    const { id } = req.params;
+    const requestId = parseInt(req.params.id);
     const { status } = req.body;
 
-    const request = await prisma.request.findUnique({ where: { id: parseInt(id) } });
+    if (isNaN(requestId)) {
+      return res.status(400).json({ erro: 'ID da solicitação inválido.' });
+    }
+
+    const statusPermitidos = ['Pendente', 'Atendido'];
+    if (!status || !statusPermitidos.includes(status)) {
+      return res.status(400).json({ erro: `Status inválido. Use: ${statusPermitidos.join(', ')}.` });
+    }
+
+    const request = await prisma.request.findUnique({ where: { id: requestId } });
     if (!request) return res.status(404).json({ erro: 'Solicitação não encontrada.' });
     if (request.institutionId !== req.user.id && req.user.role !== 'ADMIN') {
       return res.status(403).json({ erro: 'Sem permissão.' });
     }
 
     const updated = await prisma.request.update({
-      where: { id: parseInt(id) },
+      where: { id: requestId },
       data: { status },
     });
 

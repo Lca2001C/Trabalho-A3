@@ -4,6 +4,13 @@
 
 const prisma = require('../lib/prisma');
 
+// ─── Helper: valida e converte um ID de rota ────────────────────────────────
+// Retorna o inteiro ou null se inválido (NaN), evitando query quebrada no Prisma.
+function parseId(raw) {
+  const id = parseInt(raw);
+  return isNaN(id) ? null : id;
+}
+
 // ─── Helper: selects padronizados ───────────────────────────────────────────
 const INSTITUTION_SELECT = {
   id: true,
@@ -35,15 +42,17 @@ async function getAllInstitutions(req, res) {
 // ─── Aprovar ONG ────────────────────────────────────────────────────────────
 async function approveInstitution(req, res) {
   try {
-    const { id } = req.params;
-    const user = await prisma.user.findUnique({ where: { id: parseInt(id) } });
+    const id = parseId(req.params.id);
+    if (id === null) return res.status(400).json({ erro: 'ID inválido.' });
+
+    const user = await prisma.user.findUnique({ where: { id } });
 
     if (!user || user.role !== 'INSTITUTION') {
       return res.status(404).json({ erro: 'Instituição não encontrada.' });
     }
 
     await prisma.user.update({
-      where: { id: parseInt(id) },
+      where: { id },
       data: { status: 'APPROVED' },
     });
 
@@ -63,16 +72,18 @@ async function approveInstitution(req, res) {
 // ─── Reprovar ONG ───────────────────────────────────────────────────────────
 async function rejectInstitution(req, res) {
   try {
-    const { id } = req.params;
+    const id = parseId(req.params.id);
+    if (id === null) return res.status(400).json({ erro: 'ID inválido.' });
+
     const { reason } = req.body;
 
-    const user = await prisma.user.findUnique({ where: { id: parseInt(id) } });
+    const user = await prisma.user.findUnique({ where: { id } });
     if (!user || user.role !== 'INSTITUTION') {
       return res.status(404).json({ erro: 'Instituição não encontrada.' });
     }
 
     await prisma.user.update({
-      where: { id: parseInt(id) },
+      where: { id },
       data: {
         status: 'REJECTED',
         rejectionReason: reason || 'Motivo não especificado pela moderação.',
@@ -253,7 +264,10 @@ async function getAllUsers(req, res) {
 // ─── Promover usuário a Admin (POST /admin/users/:id/promote) ─────────────────
 async function promoteToAdmin(req, res) {
   try {
-    const user = await prisma.user.findUnique({ where: { id: parseInt(req.params.id) } });
+    const id = parseId(req.params.id);
+    if (id === null) return res.status(400).json({ erro: 'ID inválido.' });
+
+    const user = await prisma.user.findUnique({ where: { id } });
     if (!user) return res.status(404).json({ erro: 'Usuário não encontrado.' });
     if (user.role === 'ADMIN') return res.status(400).json({ erro: 'Usuário já é administrador.' });
 
@@ -271,7 +285,10 @@ async function promoteToAdmin(req, res) {
 // ─── Revogar role admin (DELETE /admin/users/:id/promote) ─────────────────
 async function demoteAdmin(req, res) {
   try {
-    const user = await prisma.user.findUnique({ where: { id: parseInt(req.params.id) } });
+    const id = parseId(req.params.id);
+    if (id === null) return res.status(400).json({ erro: 'ID inválido.' });
+
+    const user = await prisma.user.findUnique({ where: { id } });
     if (!user) return res.status(404).json({ erro: 'Usuário não encontrado.' });
     if (user.id === req.user.id) return res.status(400).json({ erro: 'Você não pode remover sua própria role.' });
 
@@ -355,6 +372,21 @@ async function getReports(req, res) {
   }
 }
 
+// ─── Marketplace: Listar TODAS as Recompensas (incl. inativas) ──────────────
+// Diferente de GET /api/rewards (que filtra ativo=true), o admin precisa ver
+// também os produtos desativados para poder gerenciá-los.
+async function getAllRewards(req, res) {
+  try {
+    const rewards = await prisma.reward.findMany({
+      orderBy: { id: 'desc' },
+    });
+    return res.json(rewards);
+  } catch (error) {
+    console.error('❌ Erro ao listar recompensas (admin):', error);
+    return res.status(500).json({ erro: 'Erro interno ao buscar produtos.' });
+  }
+}
+
 // ─── Marketplace: Criar Recompensa ──────────────────────────────────────────
 async function createReward(req, res) {
   try {
@@ -364,14 +396,26 @@ async function createReward(req, res) {
       return res.status(400).json({ erro: 'Nome e tipo são obrigatórios.' });
     }
 
+    // Validação: valores numéricos não podem ser negativos
+    const custoPontosNum = parseInt(custoPontos) || 0;
+    const estoqueNum = parseInt(estoque) || 0;
+    if (custoPontosNum < 0 || estoqueNum < 0) {
+      return res.status(400).json({ erro: 'custoPontos e estoque não podem ser negativos.' });
+    }
+
+    const precoNum = preco ? parseFloat(preco) : null;
+    if (precoNum !== null && (isNaN(precoNum) || precoNum < 0)) {
+      return res.status(400).json({ erro: 'Preço inválido.' });
+    }
+
     const reward = await prisma.reward.create({
       data: {
         nome,
         descricao,
-        custoPontos: parseInt(custoPontos) || 0,
+        custoPontos: custoPontosNum,
         tipo,
-        estoque: parseInt(estoque) || 0,
-        preco: preco ? parseFloat(preco) : null,
+        estoque: estoqueNum,
+        preco: precoNum,
         pontosBonus: pontosBonus ? parseInt(pontosBonus) : null,
         imagemUrl,
         ativo: true
@@ -388,11 +432,21 @@ async function createReward(req, res) {
 // ─── Marketplace: Atualizar Recompensa ──────────────────────────────────────
 async function updateReward(req, res) {
   try {
-    const { id } = req.params;
+    const id = parseId(req.params.id);
+    if (id === null) return res.status(400).json({ erro: 'ID inválido.' });
+
     const { nome, descricao, custoPontos, tipo, estoque, preco, pontosBonus, ativo, imagemUrl } = req.body;
 
+    // Validação: valores numéricos não podem ser negativos
+    if (custoPontos !== undefined && parseInt(custoPontos) < 0) {
+      return res.status(400).json({ erro: 'custoPontos não pode ser negativo.' });
+    }
+    if (estoque !== undefined && parseInt(estoque) < 0) {
+      return res.status(400).json({ erro: 'estoque não pode ser negativo.' });
+    }
+
     const reward = await prisma.reward.update({
-      where: { id: parseInt(id) },
+      where: { id },
       data: {
         nome,
         descricao,
@@ -416,12 +470,13 @@ async function updateReward(req, res) {
 // ─── Marketplace: Excluir Recompensa ────────────────────────────────────────
 async function deleteReward(req, res) {
   try {
-    const { id } = req.params;
+    const id = parseId(req.params.id);
+    if (id === null) return res.status(400).json({ erro: 'ID inválido.' });
 
-    // Soft delete ou Hard delete? Vou usar Hard delete por simplicidade, 
+    // Soft delete ou Hard delete? Vou usar Hard delete por simplicidade,
     // mas em prod geralmente usamos soft delete (ativo=false).
     await prisma.reward.delete({
-      where: { id: parseInt(id) }
+      where: { id }
     });
 
     return res.json({ mensagem: 'Produto removido com sucesso.' });
@@ -442,6 +497,7 @@ module.exports = {
   demoteAdmin,
   getReports,
   // Rewards
+  getAllRewards,
   createReward,
   updateReward,
   deleteReward,

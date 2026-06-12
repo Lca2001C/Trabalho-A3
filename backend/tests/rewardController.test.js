@@ -30,7 +30,7 @@ describe('Reward Controller', () => {
     it('400 se rewardId não informado', async () => {
       await rewardController.redeemReward(req, res);
       expect(res.status).toHaveBeenCalledWith(400);
-      expect(res.json).toHaveBeenCalledWith({ erro: 'O ID da recompensa é obrigatório.' });
+      expect(res.json).toHaveBeenCalledWith({ erro: 'O ID da recompensa é obrigatório e deve ser numérico.' });
     });
     it('404 se recompensa não encontrada', async () => {
       req.body.rewardId = '99';
@@ -63,6 +63,8 @@ describe('Reward Controller', () => {
       req.body.rewardId = '1';
       prismaMock.reward.findUnique.mockResolvedValue({ id: 1, ativo: true, estoque: 10, custoPontos: 200 });
       prismaMock.user.findUnique.mockResolvedValue({ id: 1, pontos: 1000 });
+      // O controller agora usa os pontos reais retornados pelo update (pós-transação)
+      prismaMock.user.update.mockResolvedValue({ pontos: 800 });
       prismaMock.$transaction.mockImplementation(async (cb) => cb(prismaMock));
       prismaMock.redemption.create.mockResolvedValue({ id: 1 });
       await rewardController.redeemReward(req, res);

@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
+import { useAuth } from '../contexts/AuthContext';
 import api from '../services/api';
 import { 
   ArrowLeft, 
@@ -12,7 +13,8 @@ import {
 
 export default function NovaDoacao() {
   const navigate = useNavigate();
-  
+  const { refreshUser } = useAuth();
+
   // Estado para controlar o tipo de doação: 'item' ou 'financeira'
   const [tipoDoacao, setTipoDoacao] = useState('item');
   const [item, setItem] = useState('');
@@ -67,9 +69,10 @@ export default function NovaDoacao() {
       }
 
       await api.post('/api/donations', payload);
-      
-      // Redireciona forçando o reload para atualizar o dashboard
-      window.location.href = '/dashboard';
+
+      // Atualiza os pontos do usuário no contexto e navega sem reload completo
+      await refreshUser();
+      navigate('/dashboard');
     } catch (err) {
       console.error(err);
       setError(err.response?.data?.erro || 'Erro ao registrar doação. Tente novamente.');

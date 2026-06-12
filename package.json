@@ -1,0 +1,15 @@
+{
+  "name": "conectabem",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Inicializador completo da plataforma ConectaBem (backend + frontend + túnel NGROK)",
+  "scripts": {
+    "start": "node start.js",
+    "start:public": "node start.js",
+    "start:seed": "node start.js --seed"
+  },
+  "dependencies": {
+    "@ngrok/ngrok": "^1.4.1",
+    "dotenv": "^16.4.5"
+  }
+}

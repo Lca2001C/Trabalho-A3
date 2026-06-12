@@ -101,8 +101,8 @@ export default function Cadastro() {
         });
         navigate('/login');
       } else {
-        // Fluxo Doador Normal (Login Ativo)
-        window.location.href = '/dashboard';
+        // Fluxo Doador Normal (Login Ativo) — navegação SPA, sem reload completo
+        navigate('/dashboard');
       }
     } catch (err) {
       setError(err.response?.data?.erro || 'Erro ao criar conta. Tente novamente.');

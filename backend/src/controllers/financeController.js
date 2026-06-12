@@ -9,7 +9,9 @@ async function withdraw(req, res) {
       return res.status(403).json({ erro: 'Apenas instituições podem sacar.' });
     }
 
-    if (!pixKey || !pixType || !amount || amount <= 0) {
+    // Aceita número ou string numérica, mas rejeita NaN/Infinity/negativos
+    const amountNum = Number(amount);
+    if (!pixKey || !pixType || !Number.isFinite(amountNum) || amountNum <= 0) {
       return res.status(400).json({ erro: 'Chave, Tipo de PIX e Valor válido são obrigatórios.' });
     }
 
@@ -28,7 +30,7 @@ async function withdraw(req, res) {
 
       const saldoReal = Number(agregador._sum?.valor ?? 0);
 
-      if (saldoReal <= 0 || amount > saldoReal) {
+      if (saldoReal <= 0 || amountNum > saldoReal) {
         throw new Error('SALDO_INSUFICIENTE');
       }
 
@@ -37,13 +39,13 @@ async function withdraw(req, res) {
           userId: req.user.id,
           institutionId: institutionId,
           tipo: 'financeira',
-          item: `Saque PIX (${pixType}): ${pixKey} - R$ ${amount.toFixed(2)}`,
-          valor: -amount,
+          item: `Saque PIX (${pixType}): ${pixKey} - R$ ${amountNum.toFixed(2)}`,
+          valor: -amountNum,
           status: 'entregue',
         }
       });
 
-      return { saldoAtual: saldoReal - amount };
+      return { saldoAtual: saldoReal - amountNum };
     });
 
     return res.json({

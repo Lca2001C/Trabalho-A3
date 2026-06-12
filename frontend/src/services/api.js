@@ -10,7 +10,9 @@
 import axios from 'axios';
 
 const api = axios.create({
-  baseURL: import.meta.env.VITE_API_URL || 'http://localhost:3001',
+  // String vazia = URL relativa, usa o proxy do Vite (funciona local e via NGROK).
+  // Defina VITE_API_URL apenas se quiser apontar para um backend externo diferente.
+  baseURL: import.meta.env.VITE_API_URL ?? '',
   headers: {
     'Content-Type': 'application/json',
   },

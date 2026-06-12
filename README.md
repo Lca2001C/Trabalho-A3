@@ -151,6 +151,49 @@ docker-compose up --build
 
 ---
 
+### ⚡ Inicialização Automática + Publicação na Internet (NGROK)
+
+A forma mais rápida de subir **tudo** com um único comando — e ainda deixar o app **acessível publicamente na internet** via NGROK. Funciona em **Windows, macOS e Linux**.
+
+#### Pré-requisitos
+*   [Node.js](https://nodejs.org/en/) (v18 ou superior)
+*   Conta gratuita no [NGROK](https://dashboard.ngrok.com/signup) → copie seu **authtoken** em [dashboard.ngrok.com/.../your-authtoken](https://dashboard.ngrok.com/get-started/your-authtoken)
+    *   *(O binário do ngrok é baixado automaticamente pelo `npm install` — não precisa instalar nada manualmente.)*
+
+#### Passos
+```bash
+# 1. Na pasta raiz do projeto, rode:
+npm start
+
+# Na primeira execução, o script cria os arquivos .env automaticamente.
+# 2. Preencha backend/.env com suas credenciais:
+#      DATABASE_URL, DIRECT_URL, JWT_SECRET e NGROK_AUTHTOKEN
+# 3. Rode novamente:
+npm start
+```
+
+O comando `npm start` (orquestrador `start.js`) faz **todo o processo sozinho**:
+1. Cria os `.env` a partir dos exemplos (se não existirem)
+2. Instala as dependências da raiz, do backend e do frontend
+3. Gera o Prisma Client e aplica as migrations (`prisma migrate deploy`)
+4. Sobe o **backend** (porta 3001) e aguarda o health check
+5. Sobe o **frontend** Vite (porta 5173)
+6. Abre o **túnel NGROK** e imprime a **URL pública** para compartilhar
+
+> **URL pública:** aparecerá no terminal como `https://xxxx.ngrok-free.app` — compartilhe-a para que qualquer pessoa acesse o app pela internet. Pressione `Ctrl+C` para encerrar tudo de forma limpa.
+
+**Variações do comando:**
+| Comando | Efeito |
+|---|---|
+| `npm start` | Inicialização completa + NGROK |
+| `npm run start:seed` | O mesmo, mas também popula o banco com dados de exemplo (seed) |
+| `node start.js --no-ngrok` | Roda apenas localmente, sem abrir o túnel |
+| `.\start.ps1` *(Windows)* | Atalho que chama o `start.js` |
+
+> Como o frontend faz proxy de `/api` para o backend, o acesso via NGROK é *same-origin* — **não é necessário ajustar CORS** nem expor o backend separadamente.
+
+---
+
 ### 🛠️ Como Executar Manualmente (Sem Docker)
 
 ### Pré-requisitos

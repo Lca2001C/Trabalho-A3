@@ -29,6 +29,10 @@ async function getMultiplier(req, res) {
       include: { _count: { select: { donations: true } } }
     });
 
+    if (!user) {
+      return res.status(404).json({ erro: 'Usuário não encontrado.' });
+    }
+
     let multiplicador = 1;
     let motivo = 'Base';
 
@@ -52,7 +56,7 @@ async function getMultiplier(req, res) {
 /**
  * Calcula os pontos gerados com base no tipo, valor e histórico do doador.
  */
-async function calcularPontos(userId, tipo, valor, isCampaign = false) {
+async function calcularPontos(userId, tipo, valor) {
   if (tipo === 'item') {
     return PONTOS_ITEM_FIXO;
   }
@@ -71,9 +75,11 @@ async function calcularPontos(userId, tipo, valor, isCampaign = false) {
   // 1. Primeira doação (multiplica por 3)
   if (user._count.donations === 0) {
     multiplicador = 3;
-  } 
+  }
   // 2. Campanha Especial (multiplica por 4)
-  else if (isCampaign || user.campanhaAtiva) {
+  // Segurança: somente a flag do banco — nunca aceitar do body da requisição,
+  // pois o cliente poderia se autoconceder o multiplicador 4x.
+  else if (user.campanhaAtiva) {
     multiplicador = 4;
   }
   // 3. Doação Recorrente (multiplica por 2.5)
@@ -133,8 +139,13 @@ async function createDonation(req, res) {
 
     // ── Valida se a instituição existe (quando informada) ──
     if (institutionId) {
+      const instId = parseInt(institutionId);
+      if (isNaN(instId)) {
+        return res.status(400).json({ erro: 'ID da instituição inválido.' });
+      }
+
       const instituicao = await prisma.user.findUnique({
-        where: { id: parseInt(institutionId) },
+        where: { id: instId },
       });
 
       if (!instituicao || instituicao.role !== 'INSTITUTION') {
@@ -151,7 +162,7 @@ async function createDonation(req, res) {
     }
 
     // ── Calcula os pontos a serem creditados ──
-    const pontosGerados = await calcularPontos(userId, tipo, valor, req.body.isCampaign);
+    const pontosGerados = await calcularPontos(userId, tipo, valor);
 
     // ── Transação atômica ──
     const resultado = await prisma.$transaction(async (tx) => {
